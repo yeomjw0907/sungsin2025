@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
-import Intro from './components/Intro';
+import Process from './components/Process';
 import Services from './components/Services';
 import Locations from './components/Locations';
+import Testimonials from './components/Testimonials';
 import GrowthChart from './components/GrowthChart';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
@@ -22,9 +23,10 @@ const App: React.FC = () => {
       <main>
         <Hero />
         <Stats />
-        <Intro />
+        <Process />
         <Services />
         <Locations />
+        <Testimonials />
         <GrowthChart />
         <CTA />
       </main>
