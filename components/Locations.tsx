@@ -73,7 +73,7 @@ const Locations: React.FC = () => {
 
                  <div className="bg-slate-50 rounded-xl p-5 mb-6">
                     <p className="text-slate-600 text-sm font-medium leading-relaxed mb-2">
-                       威海市环翠区西苑街道/卡尔特路91-2号
+                       山东省 威海市 环翠区凤林街道海南路9号 诚心国际
                     </p>
                     <p className="text-slate-400 text-xs">
                        威广物流北门/诚心物流
