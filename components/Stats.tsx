@@ -4,10 +4,10 @@ import { StatItem } from '../types';
 import { TrendingUp, Users, Package, MapPin, Activity } from 'lucide-react';
 
 const stats = [
-  { id: 1, label: "보유 고객", value: 10000, suffix: "+", color: "text-white", icon: Users },
-  { id: 2, label: "월 LCL 출고", value: 500, suffix: " CBM", color: "text-sungshin-cyan", icon: Package },
-  { id: 3, label: "전자상거래 건수", value: 100000, suffix: "+", color: "text-sungshin-pink", icon: TrendingUp },
-  { id: 4, label: "본사 고객 방문", value: 100, suffix: "명+", color: "text-sungshin-yellow", icon: MapPin },
+  { id: 1, label: "보유 고객", value: 2286, suffix: "", color: "text-white", icon: Users },
+  { id: 2, label: "월 LCL 출고", value: 580, suffix: " CBM", color: "text-sungshin-cyan", icon: Package },
+  { id: 3, label: "전자상거래 건수", value: 10000, suffix: "+", color: "text-sungshin-pink", icon: TrendingUp },
+  { id: 4, label: "본사 고객 방문", value: 51, suffix: "명", color: "text-sungshin-yellow", icon: MapPin },
   { id: 5, label: "회원 증가율", value: 84, suffix: "%", color: "text-green-400", icon: Activity },
 ];
 

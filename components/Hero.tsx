@@ -111,23 +111,6 @@ const Hero: React.FC = () => {
           중국-한국 무역 & 물류의 <span className="text-white font-semibold">새로운 기준</span>.<br/>
           압도적인 성과로 증명된 One-Stop Solution을 경험하세요.
         </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="mt-12 flex flex-col md:flex-row items-center justify-center gap-4"
-        >
-             <a 
-               href="https://www.ck79.kr/" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="bg-sungshin-cyan hover:bg-cyan-400 text-white px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_20px_rgba(0,160,233,0.3)] transition-all transform hover:scale-105 flex items-center gap-2 group"
-             >
-                성신컴퍼니 바로가기
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-             </a>
-        </motion.div>
       </motion.div>
 
       {/* Scroll Indicator */}

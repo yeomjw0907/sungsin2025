@@ -164,7 +164,7 @@ const Services: React.FC = () => {
                 <ul className="space-y-4 text-slate-600 mb-8">
                     <li className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-2 shrink-0"/>
-                      <span>배송대행 (위해, 심천, 광저우 센터)</span>
+                      <span>배송대행 (위해, 이우, 광저우 센터)</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-2 shrink-0"/>
@@ -181,12 +181,12 @@ const Services: React.FC = () => {
                   <div className="flex justify-between items-center text-sm gap-2">
                      <div className="flex-1 text-center bg-white p-2 rounded border border-indigo-100">
                         <span className="block font-bold text-indigo-900">3-5일</span>
-                        <span className="text-[10px] text-slate-500">해운</span>
+                        <span className="text-[10px] text-slate-500">항공</span>
                      </div>
                      <ArrowRight className="w-4 h-4 text-indigo-200" />
                      <div className="flex-1 text-center bg-white p-2 rounded border border-indigo-100">
                         <span className="block font-bold text-indigo-900">5-7일</span>
-                        <span className="text-[10px] text-slate-500">항공</span>
+                        <span className="text-[10px] text-slate-500">해운</span>
                      </div>
                   </div>
                 </div>

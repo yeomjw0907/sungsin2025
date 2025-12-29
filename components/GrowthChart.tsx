@@ -62,7 +62,7 @@ const GrowthChart: React.FC = () => {
                 <div>
                   <h4 className="font-bold text-lg text-slate-900">지속적인 성장</h4>
                   <p className="text-slate-500 text-sm mt-1 leading-relaxed">
-                    매년 200% 이상의 압도적인 성장률.<br/>
+                    매년 50% 이상의 압도적인 성장률.<br/>
                     수많은 셀러와 함께 성공 신화를 만듭니다.
                   </p>
                 </div>
@@ -104,7 +104,7 @@ const GrowthChart: React.FC = () => {
               </div>
               <div className="text-right">
                  <span className="flex items-center justify-end text-3xl font-black text-sungshin-blue">
-                    +<CountUp to={1500} />%
+                    +<CountUp to={150} />%
                  </span>
                  <span className="text-xs font-bold text-green-500 uppercase tracking-wide">Overall Growth</span>
               </div>
