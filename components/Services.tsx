@@ -164,7 +164,7 @@ const Services: React.FC = () => {
                 <ul className="space-y-4 text-slate-600 mb-8">
                     <li className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-2 shrink-0"/>
-                      <span>배송대행 (위해, 이우, 광저우 센터)</span>
+                      <span>배송대행 (웨이하이, 이우, 광저우 센터)</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full mt-2 shrink-0"/>
