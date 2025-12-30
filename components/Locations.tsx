@@ -26,7 +26,7 @@ const Locations: React.FC = () => {
             Connected Logistics
           </h2>
           <p className="text-slate-500 mt-4 text-lg">
-            인천과 위해를 잇는 최적의 물류 라인으로<br/> 
+            인천과 웨이하이를 잇는 최적의 물류 라인으로<br/> 
             가장 빠르고 안전한 서비스를 제공합니다.
           </p>
         </motion.div>
@@ -67,7 +67,7 @@ const Locations: React.FC = () => {
                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
                             <span className="text-green-600 font-bold text-sm tracking-wide">CHINA BRANCH</span>
                         </div>
-                        <h3 className="text-2xl font-bold text-slate-900">중국 위해 지사</h3>
+                        <h3 className="text-2xl font-bold text-slate-900">중국 웨이하이 지사</h3>
                     </div>
                  </div>
 
