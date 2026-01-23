@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import Topbar from './components/Topbar';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
 import Process from './components/Process';
@@ -20,7 +21,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-sungshin-cyan selection:text-white">
-      <main>
+      <Topbar />
+      <main className="pt-12 md:pt-14">
         <Hero />
         <Stats />
         <Process />
