@@ -75,9 +75,6 @@ const Locations: React.FC = () => {
                     <p className="text-slate-600 text-sm font-medium leading-relaxed mb-2">
                        山东省 威海市 环翠区凤林街道海南路9号 诚心国际
                     </p>
-                    <p className="text-slate-400 text-xs">
-                       威广物流北门/诚心物流
-                    </p>
                  </div>
                  
                  <div className="space-y-3">
