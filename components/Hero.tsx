@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, AlertCircle, TrendingDown, MessageCircle, ExternalLink, Copy, Share2 } from 'lucide-react';
+import { Calculator, AlertCircle, TrendingDown, MessageCircle, ExternalLink, Copy, Phone } from 'lucide-react';
 
 // 카테고리별 요율 데이터
 const categoryData: Record<string, Record<string, { dutyRate: number; vatRate: number }>> = {
@@ -118,16 +118,6 @@ const Hero: React.FC = () => {
     }
   };
 
-  // 카카오톡 공유 함수
-  const shareToKakao = () => {
-    const url = window.location.href;
-    const title = encodeURIComponent('세관에서 폭탄 맞지 마세요. 내 상품 진짜 통관비(세금)는 얼마일까요?');
-    const description = encodeURIComponent('성신컴퍼니 무료 통관비 계산 툴');
-    
-    // 카카오톡 링크로 공유
-    const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(url)}`;
-    window.open(kakaoUrl, '_blank');
-  };
 
   // 계산 결과
   const calculationResult = useMemo(() => {
@@ -260,6 +250,7 @@ const Hero: React.FC = () => {
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={purchasePrice}
                   onChange={(e) => setPurchasePrice(e.target.value)}
                   placeholder="예: 100"
@@ -279,6 +270,7 @@ const Hero: React.FC = () => {
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={exchangeRate}
                   onChange={(e) => setExchangeRate(e.target.value)}
                   placeholder="190"
@@ -298,6 +290,7 @@ const Hero: React.FC = () => {
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
                   placeholder="예: 1.5"
@@ -404,18 +397,32 @@ const Hero: React.FC = () => {
               무게가 무거워질수록 세금도 늘어납니다. 물류비를 낮춰야 세금도 줄어듭니다.
             </p>
             
-            {/* 메인 CTA 버튼 */}
-            <motion.a
-              href="https://pf.kakao.com/_xdxhxexj"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-3 bg-white text-sungshin-cyan px-6 py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all mb-4"
-            >
-              <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
-              <span>📦 내 상품, 성신컴퍼니 사업자 요율표 받아보기 (카톡 문의)</span>
-            </motion.a>
+            {/* 메인 CTA 버튼들 - 세로 배치 */}
+            <div className="flex flex-col gap-4 mb-4">
+              {/* 카톡 문의 버튼 */}
+              <motion.a
+                href="https://pf.kakao.com/_xdxhxexj"
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center justify-center gap-3 bg-white text-sungshin-cyan px-6 py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <MessageCircle className="w-5 h-5 md:w-6 md:h-6" />
+                <span>📦 내 상품, 성신컴퍼니 사업자 요율표 받아보기 (카톡 문의)</span>
+              </motion.a>
+
+              {/* 전화 상담 바로하기 버튼 */}
+              <motion.a
+                href="tel:010-8387-8847"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center justify-center gap-3 bg-white text-sungshin-cyan px-6 py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                <Phone className="w-5 h-5 md:w-6 md:h-6" />
+                <span>전화 상담 바로하기</span>
+              </motion.a>
+            </div>
 
             {/* 구분선 */}
             <div className="my-6 border-t border-white/30"></div>
@@ -453,17 +460,6 @@ const Hero: React.FC = () => {
                     <span>링크 복사</span>
                   </>
                 )}
-              </motion.button>
-
-              {/* 카카오톡 공유 */}
-              <motion.button
-                onClick={shareToKakao}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-5 py-3 rounded-xl font-semibold text-sm md:text-base shadow-md hover:shadow-lg transition-all border border-white/30"
-              >
-                <Share2 className="w-4 h-4 md:w-5 md:h-5" />
-                <span>카톡 공유</span>
               </motion.button>
             </div>
           </motion.div>
