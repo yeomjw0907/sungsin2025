@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import Topbar from './components/Topbar';
 import Hero from './components/Hero';
+import LiveStream from './components/LiveStream';
 import Stats from './components/Stats';
 import Process from './components/Process';
 import Services from './components/Services';
@@ -24,6 +25,7 @@ const App: React.FC = () => {
       <Topbar />
       <main className="pt-12 md:pt-14">
         <Hero />
+        <LiveStream />
         <Stats />
         <Process />
         <Services />

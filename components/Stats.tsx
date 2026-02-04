@@ -39,9 +39,6 @@ const Stats: React.FC = () => {
       <div className="absolute top-0 right-0 w-96 h-96 bg-sungshin-cyan/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2 animate-pulse" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-sungshin-pink/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 animate-pulse" />
       
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
-
       <div className="container mx-auto px-4 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
