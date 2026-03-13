@@ -75,6 +75,14 @@
         animation-delay: 1s;
         will-change: transform;
       }
+      /* 가로 스크롤 시 스크롤바 숨김 (카카오 후기 섹션 등) */
+      .hide-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
     </style>
   <script type="importmap">
 {
