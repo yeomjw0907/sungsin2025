@@ -1,18 +1,12 @@
 import React, { useEffect } from 'react';
-import Topbar from './components/Topbar';
-import Hero from './components/Hero';
-import LiveStream from './components/LiveStream';
-import Stats from './components/Stats';
-import Process from './components/Process';
-import Services from './components/Services';
-import Locations from './components/Locations';
-import Testimonials from './components/Testimonials';
-import GrowthChart from './components/GrowthChart';
-import CTA from './components/CTA';
-import Footer from './components/Footer';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './Layout';
+import HomePage from './pages/HomePage';
+import BankPage from './pages/BankPage';
+import PhonePage from './pages/PhonePage';
+import AdminPage from './pages/AdminPage';
 
 const App: React.FC = () => {
-  // Smooth scroll behavior global style
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
     return () => {
@@ -21,22 +15,14 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-sungshin-cyan selection:text-white">
-      <Topbar />
-      <main className="pt-12 md:pt-14">
-        <Hero />
-        <LiveStream />
-        <Stats />
-        <Process />
-        <Services />
-        <Locations />
-        <Testimonials />
-        <GrowthChart />
-        <CTA />
-      </main>
-      
-      <Footer />
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="bank" element={<BankPage />} />
+        <Route path="phone" element={<PhonePage />} />
+      </Route>
+      <Route path="/admin" element={<AdminPage />} />
+    </Routes>
   );
 };
 

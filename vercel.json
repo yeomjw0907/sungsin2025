@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/((?!assets/|reviews/|.*\\.(?:js|css|ico|png|jpg|jpeg|gif|webp|svg|woff2?)).*)", "destination": "/index.html" }
+  ]
+}

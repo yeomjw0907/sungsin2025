@@ -2,21 +2,60 @@ import React, { useRef, useEffect, useState } from 'react';
 import Hls from 'hls.js';
 import { motion } from 'framer-motion';
 import { Radio, Play, ExternalLink, AlertCircle } from 'lucide-react';
+import { getSiteConfig } from '../lib/supabase';
 
-const DOUYIN_LIVE_URL =
+const FALLBACK_URL_DEFAULT =
   'https://live.douyin.com/598222931159?enter_from_merge=link_share&enter_method=copy_link_share&action_type=click&from=web_code_link';
-
-// 환경 변수: M3U8 주소가 있으면 스트리밍 재생 시도 (토큰 만료 시 .env에 새 주소 갱신)
-const M3U8_URL = import.meta.env.VITE_DOUYIN_M3U8_URL as string | undefined;
 
 const LiveStream: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [streamError, setStreamError] = useState<string | null>(null);
-  const [useFallback, setUseFallback] = useState(!M3U8_URL);
+  const [useFallback, setUseFallback] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
+  const [liveM3u8Url, setLiveM3u8Url] = useState<string | null>(null);
+  const [liveFallbackUrl, setLiveFallbackUrl] = useState<string | null>(null);
+
+  // Supabase 또는 env에서 라이브 URL 결정
+  const m3u8Url =
+    liveM3u8Url !== null && liveM3u8Url !== undefined && liveM3u8Url !== ''
+      ? liveM3u8Url
+      : (import.meta.env.VITE_DOUYIN_M3U8_URL as string | undefined) || '';
+  const fallbackUrl =
+    liveFallbackUrl !== null && liveFallbackUrl !== undefined && liveFallbackUrl !== ''
+      ? liveFallbackUrl
+      : FALLBACK_URL_DEFAULT;
 
   useEffect(() => {
-    if (!M3U8_URL || !videoRef.current) return;
+    let cancelled = false;
+    setConfigLoading(true);
+    getSiteConfig(['live_m3u8_url', 'live_fallback_url'])
+      .then((config) => {
+        if (cancelled) return;
+        setLiveM3u8Url(config.live_m3u8_url ?? null);
+        setLiveFallbackUrl(config.live_fallback_url ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLiveM3u8Url(null);
+          setLiveFallbackUrl(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setConfigLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const effectiveM3u8 = m3u8Url?.trim() || '';
+    if (!effectiveM3u8) {
+      setUseFallback(true);
+      return;
+    }
+    if (!videoRef.current) return;
 
     setStreamError(null);
     setUseFallback(false);
@@ -30,7 +69,7 @@ const LiveStream: React.FC = () => {
       });
       hlsRef.current = hls;
 
-      hls.loadSource(M3U8_URL);
+      hls.loadSource(effectiveM3u8);
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -39,7 +78,11 @@ const LiveStream: React.FC = () => {
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
-          setStreamError(data.type === Hls.ErrorTypes.NETWORK_ERROR ? '스트림 연결 실패 (URL 만료 또는 차단)' : '재생 오류');
+          setStreamError(
+            data.type === Hls.ErrorTypes.NETWORK_ERROR
+              ? '스트림 연결 실패 (URL 만료 또는 차단)'
+              : '재생 오류'
+          );
           setUseFallback(true);
           hls.destroy();
           hlsRef.current = null;
@@ -51,9 +94,8 @@ const LiveStream: React.FC = () => {
       };
     }
 
-    // Safari 등 네이티브 HLS 지원 브라우저
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = M3U8_URL;
+      video.src = effectiveM3u8;
       const onError = () => {
         setStreamError('스트림 연결 실패 (URL 만료 또는 차단)');
         setUseFallback(true);
@@ -66,9 +108,36 @@ const LiveStream: React.FC = () => {
     }
 
     setUseFallback(true);
-  }, [M3U8_URL]);
+  }, [m3u8Url]);
 
   const showFallbackCard = useFallback || streamError;
+
+  if (configLoading) {
+    return (
+      <section className="relative w-full bg-gradient-to-b from-slate-50 to-white py-12 md:py-16 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 rounded-xl bg-sungshin-cyan/10">
+              <Radio className="w-6 h-6 md:w-7 md:h-7 text-sungshin-cyan" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-black text-gray-900">
+                성신컴퍼니 실시간 라이브
+              </h2>
+              <p className="text-sm md:text-base text-gray-600 mt-0.5">
+                틱톡에서 진행 중인 라이브 방송을 만나보세요
+              </p>
+            </div>
+          </div>
+          <div
+            className="w-full rounded-2xl bg-slate-200 animate-pulse"
+            style={{ paddingBottom: '56.25%' }}
+          />
+          <p className="text-center text-slate-500 text-sm mt-4">로딩 중...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative w-full bg-gradient-to-b from-slate-50 to-white py-12 md:py-16 px-4">
@@ -87,8 +156,7 @@ const LiveStream: React.FC = () => {
           </div>
         </div>
 
-        {/* M3U8 스트리밍 플레이어 (URL 있을 때만, 오류 시 폴백) */}
-        {M3U8_URL && !showFallbackCard && (
+        {m3u8Url && !showFallbackCard && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,18 +177,18 @@ const LiveStream: React.FC = () => {
           </motion.div>
         )}
 
-        {/* 스트림 오류 시 안내 */}
         {streamError && (
           <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800">
             <AlertCircle className="w-5 h-5 shrink-0" />
-            <span className="text-sm font-medium">{streamError}. 아래 버튼으로 틱톡에서 시청하세요.</span>
+            <span className="text-sm font-medium">
+              {streamError}. 아래 버튼으로 틱톡에서 시청하세요.
+            </span>
           </div>
         )}
 
-        {/* 폴백: M3U8 없거나 재생 실패 시 틱톡 이동 카드 */}
         {showFallbackCard && (
           <motion.a
-            href={DOUYIN_LIVE_URL}
+            href={fallbackUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="relative block w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 bg-gradient-to-br from-sungshin-navy to-slate-800 focus:outline-none focus:ring-4 focus:ring-sungshin-cyan/40"
@@ -141,10 +209,9 @@ const LiveStream: React.FC = () => {
           </motion.a>
         )}
 
-        {/* 라이브영상 보러가기 버튼 */}
         <div className="mt-6 text-center">
           <motion.a
-            href={DOUYIN_LIVE_URL}
+            href={fallbackUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 bg-sungshin-cyan hover:bg-sungshin-cyan/90 text-white px-6 py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all"
