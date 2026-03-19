@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Phone, MessageCircle, ExternalLink, Headphones, X, Menu } from 'lucide-react';
+import { Phone, MessageCircle, ExternalLink, Headphones, X } from 'lucide-react';
 
 const navLinks = [
   { to: '/', label: '구매대행' },
@@ -11,9 +11,7 @@ const navLinks = [
 
 const Topbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
@@ -34,37 +32,37 @@ const Topbar: React.FC = () => {
     };
   }, [isOpen]);
 
-  // 라우트 변경 시 모바일 네비 닫기
-  useEffect(() => {
-    setMobileNavOpen(false);
-  }, [location.pathname]);
-
   return (
     <>
       {/* Topbar - 로고(왼쪽) + 메뉴(가운데) + 바로가기(오른쪽) */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-sungshin-navy/95 backdrop-blur-sm text-white shadow-md">
-        <div className="container mx-auto px-4 relative">
+        <div className="container mx-auto px-4 relative flex flex-col">
+          {/* Row 1: 로고 + 바로가기 */}
           <div className="flex items-center justify-between h-12 md:h-14">
-            {/* 왼쪽: 로고 + 모바일 햄버거 */}
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0 shrink-0">
               <Link
                 to="/"
                 className="flex items-center gap-2 font-black text-white hover:text-sungshin-cyan transition-colors shrink-0 tracking-tight"
               >
                 <span className="text-lg md:text-xl">SUNGSHIN</span>
               </Link>
-              <motion.button
-                type="button"
-                onClick={() => setMobileNavOpen(!mobileNavOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
-                aria-label="메뉴"
-              >
-                <Menu className="w-5 h-5" />
-              </motion.button>
             </div>
 
-            {/* 가운데: 데스크톱 네비 링크 */}
-            <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1">
+            {/* Row 1 오른쪽: 성신 홈페이지 바로가기 */}
+            <motion.a
+              href="https://www.ck79.kr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-2 text-sm md:text-base font-semibold hover:text-sungshin-cyan transition-colors shrink-0"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span className="hidden sm:inline">성신 홈페이지 바로가기</span>
+              <span className="sm:hidden">성신 홈페이지 바로가기</span>
+            </motion.a>
+
+            {/* Row 1 가운데(Desktop): 네비 링크 */}
+            <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1">
               {navLinks.map(({ to, label }) => (
                 <NavLink
                   key={to}
@@ -79,48 +77,27 @@ const Topbar: React.FC = () => {
                 </NavLink>
               ))}
             </nav>
+          </div>
 
-            {/* 오른쪽: 성신컴퍼니 바로가기 */}
-            <motion.a
-              href="https://www.ck79.kr/"
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.05 }}
-              className="flex items-center gap-2 text-sm md:text-base font-semibold hover:text-sungshin-cyan transition-colors shrink-0"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">성신컴퍼니 바로가기</span>
-              <span className="sm:hidden">바로가기</span>
-            </motion.a>
+          {/* Row 2 (Mobile): 메뉴 */}
+          <div className="md:hidden border-t border-white/10 -mx-4 px-4">
+            <nav className="flex items-center gap-2 overflow-x-auto py-2">
+              {navLinks.map(({ to, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                      isActive ? 'bg-white/15 text-sungshin-cyan' : 'hover:bg-white/10 text-white'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
           </div>
         </div>
-
-        {/* 모바일 드롭다운 네비 */}
-        <AnimatePresence>
-          {mobileNavOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden overflow-hidden bg-sungshin-navy border-t border-white/10"
-            >
-              <nav className="container mx-auto px-4 py-3 flex flex-col gap-1">
-                {navLinks.map(({ to, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      location.pathname === to ? 'bg-white/15 text-sungshin-cyan' : 'hover:bg-white/10 text-white'
-                    }`}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* 플로팅 상담 메뉴 - 우측 하단 */}
@@ -158,7 +135,7 @@ const Topbar: React.FC = () => {
             >
               {/* 실시간 상담 (전화) */}
               <motion.a
-                href="tel:02-1234-5678"
+                href="tel:010-3213-1319"
                 whileHover={{ backgroundColor: '#f3f4f6' }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setIsOpen(false)}

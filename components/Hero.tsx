@@ -467,7 +467,7 @@ const Hero: React.FC = () => {
 
               {/* 전화 상담 바로하기 버튼 */}
               <motion.a
-                href="tel:010-8387-8847"
+                href="tel:010-3213-1319"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => trackInquiryClick('phone')}

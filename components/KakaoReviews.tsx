@@ -1,23 +1,71 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// public/reviews/ 에 저장한 카톡 후기 이미지 경로 (review-1.png ~ review-7.png 등 추가)
-const REVIEW_IMAGES = [
-  '/reviews/review-1.png',
-  '/reviews/review-2.png',
-  '/reviews/review-3.png',
-  '/reviews/review-4.png',
-  '/reviews/review-5.png',
-  '/reviews/review-6.png',
-  '/reviews/review-7.png',
-];
+import { getSupabase } from '../lib/supabase';
+
+type ReviewImage = { name: string; src: string };
+
+const REVIEW_BUCKET = 'kakao-reviews';
+const PLACEHOLDER_COUNT = 5;
 
 const CARD_WIDTH = 280;
 const GAP = 16;
 
 const KakaoReviews: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [images, setImages] = useState<ReviewImage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const supabase = getSupabase();
+      if (!supabase) {
+        setImages([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const { data, error } = await supabase.storage.from(REVIEW_BUCKET).list('');
+      if (error) {
+        if (!cancelled) {
+          setImages([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const objects = (data ?? []) as Array<any>;
+      const items: ReviewImage[] = objects
+        .map((obj) => {
+          const name = String(obj?.name ?? '');
+          if (!name) return null;
+
+          const { data: publicUrlData } = supabase.storage.from(REVIEW_BUCKET).getPublicUrl(name);
+          return {
+            name,
+            src: publicUrlData.publicUrl,
+          };
+        })
+        .filter(Boolean) as ReviewImage[];
+
+      // 업로드된 파일명이 타임스탬프 기반이므로 사전순 내림차순으로 최신 우선 정렬합니다.
+      items.sort((a, b) => b.name.localeCompare(a.name));
+
+      if (!cancelled) {
+        setImages(items);
+        setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -88,37 +136,53 @@ const KakaoReviews: React.FC = () => {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {REVIEW_IMAGES.map((src, index) => (
-            <motion.div
-              key={src}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.05 }}
-              className="flex-shrink-0 w-[260px] md:w-[280px] rounded-2xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50 snap-start"
-              style={{ maxHeight: '420px' }}
-            >
-              <img
-                src={src}
-                alt={`고객 후기 ${index + 1}`}
-                className="w-full h-full object-contain object-top block"
-                style={{ maxHeight: '420px', minHeight: '320px' }}
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent && !parent.querySelector('.placeholder')) {
-                    const span = document.createElement('span');
-                    span.className = 'placeholder flex items-center justify-center w-full text-slate-400 text-sm p-8';
-                    span.style.minHeight = '320px';
-                    span.textContent = '후기 이미지';
-                    parent.appendChild(span);
-                  }
-                }}
-              />
-            </motion.div>
-          ))}
+          {loading
+            ? Array.from({ length: PLACEHOLDER_COUNT }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex-shrink-0 w-[260px] md:w-[280px] rounded-2xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50 snap-start"
+                  style={{ maxHeight: '420px' }}
+                >
+                  <div className="w-full h-full min-h-[320px] bg-slate-100 animate-pulse" />
+                </div>
+              ))
+            : images.length === 0
+              ? (
+                  <div className="px-4 py-10 text-center text-slate-500 w-full">
+                    후기 이미지가 아직 없습니다.
+                  </div>
+                )
+              : images.map((img, index) => (
+                  <motion.div
+                    key={img.name}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex-shrink-0 w-[260px] md:w-[280px] rounded-2xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50 snap-start"
+                    style={{ maxHeight: '420px' }}
+                  >
+                    <img
+                      src={img.src}
+                      alt={`고객 후기 ${index + 1}`}
+                      className="w-full h-full object-contain object-top block"
+                      style={{ maxHeight: '420px', minHeight: '320px' }}
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent && !parent.querySelector('.placeholder')) {
+                          const span = document.createElement('span');
+                          span.className = 'placeholder flex items-center justify-center w-full text-slate-400 text-sm p-8';
+                          span.style.minHeight = '320px';
+                          span.textContent = '후기 이미지';
+                          parent.appendChild(span);
+                        }
+                      }}
+                    />
+                  </motion.div>
+                ))}
         </div>
       </div>
     </section>

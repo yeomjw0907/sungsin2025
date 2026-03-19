@@ -16,6 +16,12 @@ const AdminPage: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState<'success' | 'error' | null>(null);
 
+  const REVIEW_BUCKET = 'kakao-reviews';
+  const [reviewFiles, setReviewFiles] = useState<FileList | null>(null);
+  const [reviewImages, setReviewImages] = useState<Array<{ name: string; url: string }>>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState<string>('');
+
   const supabase = getSupabase();
 
   useEffect(() => {
@@ -87,6 +93,104 @@ const AdminPage: React.FC = () => {
       return;
     }
     setSaveMessage('success');
+  };
+
+  const refreshReviewImages = async () => {
+    if (!supabase || !user) return;
+
+    setReviewLoading(true);
+    setReviewMessage('');
+    const { data, error } = await supabase.storage.from(REVIEW_BUCKET).list('');
+    if (error) {
+      setReviewImages([]);
+      setReviewMessage('후기 이미지 목록을 불러오지 못했습니다. Storage 버킷/정책을 확인하세요.');
+      setReviewLoading(false);
+      return;
+    }
+
+    const objects = (data ?? []) as Array<any>;
+    const items = objects
+      .map((obj) => {
+        const name = String(obj?.name ?? '');
+        if (!name) return null;
+        const { data: publicUrlData } = supabase.storage.from(REVIEW_BUCKET).getPublicUrl(name);
+        return { name, url: publicUrlData.publicUrl };
+      })
+      .filter(Boolean) as Array<{ name: string; url: string }>;
+
+    // 업로드 파일명 기준 최신 우선 정렬
+    items.sort((a, b) => b.name.localeCompare(a.name));
+    setReviewImages(items);
+    setReviewLoading(false);
+  };
+
+  useEffect(() => {
+    if (!user || !supabase) return;
+    refreshReviewImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, supabase]);
+
+  const sanitizeBaseName = (name: string) => {
+    // Windows/URL 안전 문자만 남기고 길이는 적당히 제한합니다.
+    return name
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9-_가-힣]/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 50);
+  };
+
+  const handleUploadReviews = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !user) return;
+    if (!reviewFiles || reviewFiles.length === 0) {
+      setReviewMessage('업로드할 이미지를 선택하세요.');
+      return;
+    }
+
+    setReviewLoading(true);
+    setReviewMessage('');
+
+    try {
+      const files = Array.from(reviewFiles);
+      const now = Date.now();
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+        const ext = extMatch?.[1] ? extMatch[1].toLowerCase() : 'png';
+        const base = sanitizeBaseName(file.name);
+        const objectName = `${now}_${i}_${base}.${ext}`;
+
+        const { error } = await supabase.storage.from(REVIEW_BUCKET).upload(objectName, file, {
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+        if (error) throw error;
+      }
+
+      setReviewFiles(null);
+      setReviewMessage('업로드 완료!');
+      await refreshReviewImages();
+    } catch (err: any) {
+      setReviewMessage(err?.message || '업로드에 실패했습니다.');
+      setReviewLoading(false);
+    }
+  };
+
+  const handleDeleteReview = async (name: string) => {
+    if (!supabase || !user) return;
+    setReviewLoading(true);
+    setReviewMessage('');
+
+    const { error } = await supabase.storage.from(REVIEW_BUCKET).remove([name]);
+    if (error) {
+      setReviewMessage('삭제에 실패했습니다.');
+      setReviewLoading(false);
+      return;
+    }
+
+    setReviewMessage('삭제 완료!');
+    await refreshReviewImages();
   };
 
   if (authLoading) {
@@ -265,6 +369,84 @@ const AdminPage: React.FC = () => {
               저장
             </button>
           </form>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mt-8 bg-white rounded-2xl shadow-xl p-6 md:p-8"
+        >
+          <h2 className="text-xl font-bold text-gray-900 mb-6">카카오 후기 이미지 관리</h2>
+          <p className="text-slate-600 text-sm mb-6">
+            아래에서 이미지를 업로드/삭제하면 홈 화면의 카카오 후기 섹션이 자동으로 업데이트됩니다.
+          </p>
+
+          <form onSubmit={handleUploadReviews} className="space-y-4">
+            <div>
+              <label htmlFor="review-images" className="block text-sm font-medium text-gray-700 mb-2">
+                후기 이미지 업로드
+              </label>
+              <input
+                id="review-images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setReviewFiles(e.target.files)}
+                className="w-full"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                권장: JPG/PNG. 업로드 순서는 파일명이 최신 우선으로 정렬됩니다.
+              </p>
+            </div>
+
+            {reviewMessage && (
+              <p className={`text-sm px-4 py-2 rounded-lg ${reviewMessage.includes('실패') ? 'text-red-600 bg-red-50' : 'text-green-600 bg-green-50'}`}>
+                {reviewMessage}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={reviewLoading}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-sungshin-cyan text-white font-semibold hover:bg-sungshin-cyan/90 transition-colors disabled:opacity-60"
+            >
+              {reviewLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : '업로드'}
+            </button>
+          </form>
+
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-gray-900">현재 이미지</h3>
+              <span className="text-sm text-slate-500">{reviewImages.length}개</span>
+            </div>
+
+            {reviewLoading && reviewImages.length === 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-32 rounded-xl bg-slate-100 animate-pulse" />
+                ))}
+              </div>
+            ) : reviewImages.length === 0 ? (
+              <div className="text-slate-500 text-sm py-4">아직 업로드된 후기가 없습니다.</div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {reviewImages.map((img) => (
+                  <div key={img.name} className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                    <img src={img.url} alt="후기 이미지" className="w-full h-32 object-cover bg-white" />
+                    <button
+                      type="button"
+                      disabled={reviewLoading}
+                      onClick={() => handleDeleteReview(img.name)}
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-white text-xs px-2 py-1 rounded-lg border border-slate-200 text-slate-700 disabled:opacity-60"
+                    >
+                      삭제
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </motion.div>
       </main>
     </div>

@@ -121,10 +121,10 @@ const Locations: React.FC = () => {
 
                  <div className="bg-slate-50 rounded-xl p-5 mb-6">
                     <p className="text-slate-600 text-sm font-medium leading-relaxed mb-2">
-                       인천광역시 미추홀구 석정로 282번길 34
+                       인천광역시 동구 금곡로 40
                     </p>
                     <p className="text-slate-400 text-xs">
-                       푸른빌딩 4층
+                       3층
                     </p>
                  </div>
                  

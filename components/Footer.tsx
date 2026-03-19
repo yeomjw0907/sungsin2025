@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
                     </div>
                     <div className="flex gap-4">
                         <span className="text-slate-600 w-20 shrink-0">주소</span>
-                        <span className="text-slate-300">인천광역시 미추홀구 석정로 282번길 34 푸른빌딩 4층</span>
+                        <span className="text-slate-300">인천광역시 동구 금곡로 40 3층</span>
                     </div>
                     
                     <div className="h-px bg-slate-800 my-3" />
