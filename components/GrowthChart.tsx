@@ -42,9 +42,9 @@ const GrowthChart: React.FC = () => {
             className="lg:w-1/3 flex flex-col justify-center"
           >
             <h2 className="text-4xl font-bold text-slate-900 mb-8 leading-tight">
-              Unstoppable <br/>
+              지속 가능한 <br/>
               <span className="text-sungshin-blue relative">
-                Growth Engine.
+                성장 지표
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-sungshin-blue/20" viewBox="0 0 100 10" preserveAspectRatio="none">
                     <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="4" fill="none" />
                 </svg>
@@ -99,14 +99,14 @@ const GrowthChart: React.FC = () => {
 
             <div className="flex justify-between items-end mb-8 relative z-10">
               <div>
-                 <h3 className="text-xl font-bold text-slate-900">Yearly Revenue Growth</h3>
-                 <p className="text-slate-400 text-sm">2019 - 2025 (Projected)</p>
+                 <h3 className="text-xl font-bold text-slate-900">연도별 매출 성장</h3>
+                 <p className="text-slate-400 text-sm">2019 - 2025 (추정)</p>
               </div>
               <div className="text-right">
                  <span className="flex items-center justify-end text-3xl font-black text-sungshin-blue">
                     +<CountUp to={150} />%
                  </span>
-                 <span className="text-xs font-bold text-green-500 uppercase tracking-wide">Overall Growth</span>
+                 <span className="text-xs font-bold text-green-500 uppercase tracking-wide">누적 성장률</span>
               </div>
             </div>
 
@@ -138,7 +138,7 @@ const GrowthChart: React.FC = () => {
                         boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' 
                     }}
                     itemStyle={{ color: '#fff' }}
-                    formatter={(value) => [`${value}`, 'Revenue Index']}
+                    formatter={(value) => [`${value}`, '매출 지수']}
                   />
                   <Area 
                     type="monotone" 

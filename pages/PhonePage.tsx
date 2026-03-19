@@ -7,19 +7,21 @@ import {
   Users,
   FileText,
   CheckCircle2,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import PageCTA from '../components/PageCTA';
 
 const steps = [
   { step: 1, title: '통신사·요금제 선택', desc: '구매대행·업무용에 맞는 통신사·요금제를 안내합니다. 인증·연락 용도에 맞는 옵션도 설명해 드립니다.' },
-  { step: 2, title: '신분증 준비·방문', desc: '신분증(여권 또는 외국인등록증)만 준비하시면 됩니다. 나머지 서류·절차는 성신컴퍼니가 알아서 안내·처리해 드립니다.' },
+  { step: 2, title: '신분증 준비·방문', desc: '신분증(여권 또는 외국인등록증)만 준비하시면 됩니다. 이후 개통 절차는 전담 매니저가 단계별로 안내합니다.' },
   { step: 3, title: '개통 완료', desc: '개통 후 USIM·요금 납부·인증용 사용 방법 등 필요한 안내를 해 드립니다.' },
 ];
 
 const targets = [
-  '중국 구매대행 업무용 한국 휴대폰 번호가 필요하신 분',
-  '쇼핑몰·결제 인증·연락처용 한국 번호가 필요하신 분',
-  '장기 체류·사업자로 한국 번호를 쓰시는 구매대행 하시는 분',
+  '중국 구매대행 업무에 필요한 한국 휴대폰 번호를 준비하시는 분',
+  '쇼핑몰 운영·결제 인증·고객 응대용 한국 번호가 필요하신 분',
+  '장기 체류 또는 사업 운영 목적으로 안정적인 국내 번호가 필요하신 분',
 ];
 
 const stayTypes = [
@@ -30,7 +32,7 @@ const stayTypes = [
 
 const faqs = [
   { q: '구매대행용으로 한국 휴대폰 개통이 필요한가요?', a: '쇼핑몰 가입·결제 인증·업체 연락 등에 한국 번호가 필요한 경우가 많습니다. 성신컴퍼니 고객님 중에도 구매대행 목적으로 개통을 이용하시는 분이 많습니다.' },
-  { q: '개통까지 얼마나 걸리나요?', a: '신분증만 있으시면 1일 안에도 개통 가능합니다. 당일 처리되는 경우가 많으며, 나머지는 성신컴퍼니가 알아서 도와드립니다.' },
+  { q: '개통까지 얼마나 걸리나요?', a: '신분증이 준비되어 있으면 1일 내 개통 가능한 경우가 많습니다. 체류 조건과 통신사에 따라 소요 시간은 달라질 수 있습니다.' },
   { q: '외국인등록증 없이도 가능한가요?', a: '단기 방문 시 여권만으로 가능한 상품이 있을 수 있습니다. 체류 형태에 맞는 방법을 상담을 통해 안내해 드립니다.' },
 ];
 
@@ -53,7 +55,7 @@ const PhonePage: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-5xl font-black text-gray-900 mb-4"
           >
-            핸드폰 개설 도움
+            구매대행 업무용 한국 번호 개통 지원
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -61,9 +63,32 @@ const PhonePage: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto break-keep"
           >
-            중국 구매대행 하시는 분들 중 한국 휴대폰 번호가 필요하신 분을 성신컴퍼니가
-            안내해 드립니다. 신분증만 있으면 되며, 나머지는 성신컴퍼니가 알아서 도와드립니다. 1일 안에도 개통 가능합니다.
+            쇼핑몰 인증, 결제, 고객 소통에 필요한 한국 번호 개통을 전담 매니저가 빠르게 지원합니다.
+            신분증만 준비하시면 나머지 절차는 성신컴퍼니가 안내해 드립니다.
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 flex flex-col sm:flex-row gap-3 justify-center"
+          >
+            <a
+              href="https://pf.kakao.com/_xdxhxexj"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[#FEE500] text-gray-900 px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            >
+              <MessageCircle className="w-5 h-5" />
+              전담 매니저 상담 요청
+            </a>
+            <a
+              href="tel:010-3213-1319"
+              className="inline-flex items-center justify-center gap-2 bg-sungshin-cyan text-white px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            >
+              <Phone className="w-5 h-5" />
+              전화 상담 연결
+            </a>
+          </motion.div>
         </div>
       </section>
 
@@ -77,7 +102,7 @@ const PhonePage: React.FC = () => {
             className="flex items-center gap-3 mb-8"
           >
             <Users className="w-6 h-6 text-sungshin-cyan" />
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">이런 분들께 도움을 드립니다</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">이런 분들께 적합합니다</h2>
           </motion.div>
           <ul className="space-y-3">
             {targets.map((item, i) => (
@@ -135,7 +160,7 @@ const PhonePage: React.FC = () => {
             viewport={{ once: true }}
             className="mb-6"
           >
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">필요한 것</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">준비 서류</h2>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -145,7 +170,7 @@ const PhonePage: React.FC = () => {
           >
             <p className="text-gray-600 leading-relaxed break-keep">
               <strong className="text-gray-800">신분증(여권 또는 외국인등록증)만</strong> 있으면 됩니다.
-              나머지 서류·절차는 성신컴퍼니가 알아서 안내하고 처리해 드리니, 부담 갖지 마시고 문의해 주세요.
+              이후 개통 절차는 전담 매니저가 안내해 드립니다.
             </p>
           </motion.div>
         </div>
@@ -219,8 +244,8 @@ const PhonePage: React.FC = () => {
       </section>
 
       <PageCTA
-        title="핸드폰 개설이 필요하신가요?"
-        description="카카오톡 또는 전화로 문의하시면 친절히 안내해 드립니다."
+        title="인증부터 고객 응대까지, 업무용 번호를 안정적으로 준비하세요"
+        description="체류 조건에 맞는 개통 옵션을 확인하고 빠르게 상담받으세요."
       />
     </div>
   );

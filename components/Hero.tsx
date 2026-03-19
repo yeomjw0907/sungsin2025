@@ -483,7 +483,7 @@ const Hero: React.FC = () => {
 
             {/* 추가 버튼들 */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              {/* 성신 홈페이지 바로가기 */}
+              {/* 성신 공식 홈페이지 */}
               <motion.a
                 href="https://www.ck79.kr/"
                 target="_blank"
@@ -494,7 +494,7 @@ const Hero: React.FC = () => {
                 className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-5 py-3 rounded-xl font-semibold text-sm md:text-base shadow-md hover:shadow-lg transition-all border border-white/30"
               >
                 <ExternalLink className="w-4 h-4 md:w-5 md:h-5" />
-                <span>성신 홈페이지 바로가기</span>
+                <span>성신 공식 홈페이지</span>
               </motion.a>
 
               {/* 링크 복사 */}

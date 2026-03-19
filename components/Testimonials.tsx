@@ -37,7 +37,7 @@ const Testimonials: React.FC = () => {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-6">
-            Partners' <span className="text-sungshin-blue">Success Stories</span>
+            파트너사의 <span className="text-sungshin-blue">성공 사례</span>
           </h2>
           <p className="text-slate-500 text-lg">성신컴퍼니와 함께 성장한 파트너사들의 실제 이야기입니다.</p>
         </motion.div>

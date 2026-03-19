@@ -1,15 +1,26 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Hls from 'hls.js';
-import { motion } from 'framer-motion';
-import { Radio, Play, ExternalLink, AlertCircle } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Radio, Play, ExternalLink, AlertCircle, MessageCircle, Phone } from 'lucide-react';
 import { getSiteConfig } from '../lib/supabase';
 
 const FALLBACK_URL_DEFAULT =
   'https://live.douyin.com/598222931159?enter_from_merge=link_share&enter_method=copy_link_share&action_type=click&from=web_code_link';
+const KAKAO_URL = 'https://pf.kakao.com/_xdxhxexj';
+const TEL_URL = 'tel:010-3213-1319';
+const LIVE_HERO_VARIANT = (import.meta.env.VITE_LIVE_HERO_VARIANT as string | undefined) === 'B' ? 'B' : 'A';
+
+declare global {
+  interface Window {
+    gtag?: (...args: any[]) => void;
+  }
+}
 
 const LiveStream: React.FC = () => {
+  const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const hasTrackedHeroView = useRef(false);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [useFallback, setUseFallback] = useState(true);
   const [configLoading, setConfigLoading] = useState(true);
@@ -111,23 +122,61 @@ const LiveStream: React.FC = () => {
   }, [m3u8Url]);
 
   const showFallbackCard = useFallback || streamError;
+  const heroCopy =
+    LIVE_HERO_VARIANT === 'B'
+      ? {
+          badge: '실시간 운영 공개',
+          titleTop: '보여주기식 소개 대신',
+          titleBottom: '실제 운영 현장을 공개합니다',
+          body: '24시간 운영 화면으로 검수, 포장, 출고 흐름을 투명하게 보여드립니다. 광고 문구보다 실행력을 먼저 확인하세요.',
+        }
+      : {
+          badge: 'LIVE 운영중',
+          titleTop: '중국 무역 현장을',
+          titleBottom: '실시간으로 공개합니다',
+          body: '실시간 성신 작업 현황을 확인해 보세요.',
+        };
+  const trackCtaClick = (label: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'cta_click', {
+        event_category: 'Consult',
+        event_label: label,
+      });
+    }
+  };
+  const trackExternalClick = (position: string) => {
+    if (window.gtag) {
+      window.gtag('event', 'live_external_click', {
+        position,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (hasTrackedHeroView.current) return;
+    hasTrackedHeroView.current = true;
+    if (window.gtag) {
+      window.gtag('event', 'live_hero_view', {
+        hero_variant: LIVE_HERO_VARIANT,
+        page_path: window.location.pathname,
+      });
+    }
+  }, []);
 
   if (configLoading) {
     return (
       <section className="relative w-full bg-gradient-to-b from-slate-50 to-white py-12 md:py-16 px-4">
-        <div className="container mx-auto max-w-5xl">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-xl bg-sungshin-cyan/10">
-              <Radio className="w-6 h-6 md:w-7 md:h-7 text-sungshin-cyan" />
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900">
-                성신컴퍼니 실시간 라이브
-              </h2>
-              <p className="text-sm md:text-base text-gray-600 mt-0.5">
-                틱톡에서 진행 중인 라이브 방송을 만나보세요
-              </p>
-            </div>
+        <div className="container mx-auto max-w-6xl">
+          <div className="mb-6">
+            <p className="text-sm font-semibold text-sungshin-cyan mb-2">실시간 운영 현황</p>
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-3 break-keep">
+              {heroCopy.titleTop}
+              <br className="hidden md:block" />
+              {heroCopy.titleBottom}
+            </h1>
+            <p className="text-base md:text-lg text-gray-600 max-w-3xl break-keep">
+              {heroCopy.body}
+            </p>
           </div>
           <div
             className="w-full rounded-2xl bg-slate-200 animate-pulse"
@@ -141,25 +190,31 @@ const LiveStream: React.FC = () => {
 
   return (
     <section className="relative w-full bg-gradient-to-b from-slate-50 to-white py-12 md:py-16 px-4">
-      <div className="container mx-auto max-w-5xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-sungshin-cyan/10">
-            <Radio className="w-6 h-6 md:w-7 md:h-7 text-sungshin-cyan" />
+      <div className="container mx-auto max-w-6xl">
+        <div className="mb-8 md:mb-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-sungshin-cyan/30 bg-sungshin-cyan/10 px-4 py-2 text-sungshin-cyan text-xs md:text-sm font-semibold mb-4">
+            <Radio className="w-4 h-4" />
+            {heroCopy.badge}
           </div>
-          <div>
-            <h2 className="text-2xl md:text-3xl font-black text-gray-900">
-              성신컴퍼니 실시간 라이브
-            </h2>
-            <p className="text-sm md:text-base text-gray-600 mt-0.5">
-              틱톡에서 진행 중인 라이브 방송을 만나보세요
-            </p>
+          <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-3 break-keep">
+            {heroCopy.titleTop}
+            <br className="hidden md:block" />
+            {heroCopy.titleBottom}
+          </h1>
+          <p className="text-base md:text-lg text-gray-600 max-w-3xl break-keep mb-4">
+            {heroCopy.body}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">검수/포장 실시간 진행</span>
+            <span className="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">전담팀 상시 운영</span>
+            <span className="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">상담 즉시 연결</span>
           </div>
         </div>
 
         {m3u8Url && !showFallbackCard && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
             className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 bg-black"
             style={{ paddingBottom: '56.25%' }}
           >
@@ -193,8 +248,9 @@ const LiveStream: React.FC = () => {
             rel="noopener noreferrer"
             className="relative block w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 bg-gradient-to-br from-sungshin-navy to-slate-800 focus:outline-none focus:ring-4 focus:ring-sungshin-cyan/40"
             style={{ paddingBottom: '56.25%' }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            whileHover={reduceMotion ? undefined : { scale: 1.01 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+            onClick={() => trackExternalClick('fallback_card')}
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white p-6">
               <div className="p-5 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30">
@@ -203,23 +259,49 @@ const LiveStream: React.FC = () => {
               <span className="text-lg md:text-xl font-bold">지금 라이브 보기</span>
               <span className="text-sm text-white/80 flex items-center gap-1">
                 <ExternalLink className="w-4 h-4" />
-                클릭하면 틱톡 라이브 페이지로 이동합니다
+                클릭하면 외부 라이브 페이지로 이동합니다
               </span>
             </div>
           </motion.a>
         )}
 
-        <div className="mt-6 text-center">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <motion.a
+            href={KAKAO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-[#FEE500] text-gray-900 px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+            onClick={() => trackCtaClick('Live Hero Kakao')}
+          >
+            <MessageCircle className="w-5 h-5" />
+            전담 매니저 상담 요청
+          </motion.a>
+          <motion.a
+            href={TEL_URL}
+            className="inline-flex items-center justify-center gap-2 bg-sungshin-cyan hover:bg-sungshin-cyan/90 text-white px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+            onClick={() => trackCtaClick('Live Hero Call')}
+          >
+            <Phone className="w-5 h-5" />
+            전화 상담 연결
+          </motion.a>
+        </div>
+
+        <div className="mt-4 text-center">
           <motion.a
             href={fallbackUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 bg-sungshin-cyan hover:bg-sungshin-cyan/90 text-white px-6 py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transition-all"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
+            className="inline-flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
+            whileHover={reduceMotion ? undefined : { scale: 1.01 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+            onClick={() => trackExternalClick('secondary_link')}
           >
-            <ExternalLink className="w-5 h-5" />
-            라이브영상 보러가기
+            <ExternalLink className="w-4 h-4" />
+            외부 라이브 페이지에서 보기
           </motion.a>
         </div>
       </div>

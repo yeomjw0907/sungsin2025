@@ -7,25 +7,27 @@ import {
   Users,
   FileText,
   CheckCircle2,
+  MessageCircle,
+  Phone,
 } from 'lucide-react';
 import PageCTA from '../components/PageCTA';
 
 const steps = [
-  { step: 1, title: '신분증 준비', desc: '신분증(여권 또는 외국인등록증)만 준비하시면 됩니다. 나머지 서류·절차는 성신컴퍼니가 알아서 안내·처리해 드립니다.' },
+  { step: 1, title: '신분증 준비', desc: '신분증(여권 또는 외국인등록증)만 준비하시면 됩니다. 이후 서류 및 진행 절차는 전담 매니저가 단계별로 안내합니다.' },
   { step: 2, title: '방문·예약', desc: '선택하신 은행 방문 또는 예약 절차를 안내합니다. 비대면 가능 여부도 상담 시 확인 가능합니다.' },
-  { step: 3, title: '개설 완료', desc: '계좌 개설 후 입출금·송금·결제 이용 방법까지 구매대행에 필요한 부분을 안내해 드립니다.' },
+  { step: 3, title: '개설 완료', desc: '개설 후 입출금·송금·결제 이용 방법까지 구매대행 운영에 필요한 내용을 안내해 드립니다.' },
 ];
 
 const targets = [
-  '중국 구매대행으로 한국 계좌가 필요하신 분',
-  '대리 송금·결제·정산용 한국 통장이 필요하신 분',
-  '사업용·개인용 구매대행 계좌를 준비 중이신 분',
-  '한국 체류 중 통장 개설이 어려워 안내가 필요하신 분',
+  '중국 구매대행 운영에 필요한 한국 계좌를 준비하시는 분',
+  '송금·결제·정산 용도의 국내 계좌가 필요하신 분',
+  '사업용 또는 개인용 구매대행 계좌 개설을 검토 중이신 분',
+  '체류 조건으로 계좌 개설 절차가 복잡해 전문 안내가 필요하신 분',
 ];
 
 const faqs = [
   { q: '구매대행용으로 한국 통장 개설이 가능한가요?', a: '네. 성신컴퍼니 고객님 중 상당수가 구매대행 목적으로 통장 개설을 이용하십니다. 체류·서류에 맞는 방법을 상담 시 안내해 드립니다.' },
-  { q: '개설까지 소요 기간은 얼마나 되나요?', a: '신분증만 있으시면 1일 안에도 개설 가능합니다. 당일 처리되는 경우가 많으며, 나머지는 성신컴퍼니가 알아서 도와드립니다.' },
+  { q: '개설까지 소요 기간은 얼마나 되나요?', a: '신분증이 준비되어 있으면 1일 내 개설 가능한 경우가 많습니다. 고객 상황에 맞는 일정은 상담 시 정확히 안내해 드립니다.' },
   { q: '비대면으로도 개설할 수 있나요?', a: '은행과 상품에 따라 비대면 개설이 가능한 경우가 있습니다. 상담을 통해 가능 여부를 확인해 드립니다.' },
 ];
 
@@ -48,7 +50,7 @@ const BankPage: React.FC = () => {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-5xl font-black text-gray-900 mb-4"
           >
-            통장 개설 도움
+            구매대행 사업자 전용 통장 개설 지원
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -56,9 +58,32 @@ const BankPage: React.FC = () => {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto break-keep"
           >
-            중국 구매대행 하시는 분들 중 한국 통장이 필요하신 분들을 성신컴퍼니가
-            안내해 드립니다. 신분증만 있으면 되며, 나머지는 성신컴퍼니가 알아서 도와드립니다. 1일 안에도 개설 가능합니다.
+            중국 구매대행 운영에 필요한 정산용 한국 계좌를 빠르게 준비해 드립니다.
+            신분증만 준비하시면 나머지 절차는 성신컴퍼니 전담팀이 안내합니다.
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8 flex flex-col sm:flex-row gap-3 justify-center"
+          >
+            <a
+              href="https://pf.kakao.com/_xdxhxexj"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[#FEE500] text-gray-900 px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            >
+              <MessageCircle className="w-5 h-5" />
+              전담 매니저 상담 요청
+            </a>
+            <a
+              href="tel:010-3213-1319"
+              className="inline-flex items-center justify-center gap-2 bg-sungshin-cyan text-white px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"
+            >
+              <Phone className="w-5 h-5" />
+              전화 상담 연결
+            </a>
+          </motion.div>
         </div>
       </section>
 
@@ -72,7 +97,7 @@ const BankPage: React.FC = () => {
             className="flex items-center gap-3 mb-8"
           >
             <Users className="w-6 h-6 text-sungshin-cyan" />
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">이런 분들께 도움을 드립니다</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">이런 분들께 적합합니다</h2>
           </motion.div>
           <ul className="space-y-3">
             {targets.map((item, i) => (
@@ -102,7 +127,7 @@ const BankPage: React.FC = () => {
             className="flex items-center gap-3 mb-6"
           >
             <FileText className="w-6 h-6 text-sungshin-cyan" />
-            <h2 className="text-xl md:text-2xl font-bold text-gray-900">필요한 것</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">준비 서류</h2>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -112,7 +137,7 @@ const BankPage: React.FC = () => {
           >
             <p className="text-gray-600 leading-relaxed break-keep mb-4">
               <strong className="text-gray-800">신분증(여권 또는 외국인등록증)만</strong> 있으면 됩니다.
-              나머지 서류·절차는 성신컴퍼니가 알아서 안내하고 처리해 드리니, 부담 갖지 마시고 문의해 주세요.
+              이후 서류 확인과 진행 절차는 전담 매니저가 안내해 드립니다.
             </p>
           </motion.div>
         </div>
@@ -186,8 +211,8 @@ const BankPage: React.FC = () => {
       </section>
 
       <PageCTA
-        title="통장 개설이 필요하신가요?"
-        description="카카오톡 또는 전화로 문의하시면 친절히 안내해 드립니다."
+        title="계좌 개설부터 정산 준비까지, 전담 매니저가 함께합니다"
+        description="구매대행 운영에 필요한 계좌 개설 절차를 빠르게 안내해 드립니다."
       />
     </div>
   );

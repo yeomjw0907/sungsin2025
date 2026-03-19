@@ -43,11 +43,11 @@ const Process: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-           <span className="text-sungshin-cyan font-bold tracking-widest text-sm uppercase bg-cyan-50 px-4 py-2 rounded-full">Work Process</span>
+           <span className="text-sungshin-cyan font-bold tracking-widest text-sm uppercase bg-cyan-50 px-4 py-2 rounded-full">운영 프로세스</span>
            <h2 className="text-3xl md:text-4xl font-bold mt-6 text-slate-900">
-             Seamless Logistics Flow
+             신뢰 기반 물류 운영 절차
            </h2>
-           <p className="text-slate-500 mt-4">복잡한 무역 과정을 성신컴퍼니만의 시스템으로 단순화했습니다.</p>
+           <p className="text-slate-500 mt-4">복잡한 무역 과정을 표준화된 체계로 관리해 안정적인 결과를 제공합니다.</p>
         </motion.div>
 
         <div className="relative">

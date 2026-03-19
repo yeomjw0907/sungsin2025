@@ -12,10 +12,11 @@ const Services: React.FC = () => {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <span className="text-sungshin-blue font-bold tracking-widest text-sm uppercase bg-blue-50 px-4 py-2 rounded-full">Business Areas</span>
+          <span className="text-sungshin-blue font-bold tracking-widest text-sm uppercase bg-blue-50 px-4 py-2 rounded-full">핵심 서비스</span>
           <h2 className="text-4xl md:text-5xl font-bold mt-8 text-slate-900 leading-tight">
-            Comprehensive <br className="md:hidden"/>
-            <span className="text-sungshin-blue">Logistics Solutions</span>
+            수입 비즈니스 전 과정을
+            <br className="md:hidden"/>
+            <span className="text-sungshin-blue">원스톱으로 지원합니다</span>
           </h2>
           <p className="text-slate-600 mt-6 max-w-2xl mx-auto text-lg">
             무역, 물류, 전자상거래, 3PL/4PL까지.<br/>
@@ -42,7 +43,7 @@ const Services: React.FC = () => {
                 
                 <h3 className="text-2xl font-bold mb-2 text-slate-900 flex items-center gap-3">
                   <span className="text-sungshin-blue/30 font-black text-3xl">01</span>
-                  무역 (Trade)
+                  무역 지원
                 </h3>
                 
                 <div className="h-px w-full bg-slate-100 my-6" />
@@ -63,7 +64,7 @@ const Services: React.FC = () => {
                 </ul>
 
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <p className="font-bold text-sungshin-blue mb-3 text-sm uppercase tracking-wide">Commission Rate</p>
+                  <p className="font-bold text-sungshin-blue mb-3 text-sm uppercase tracking-wide">수수료 기준</p>
                   <div className="space-y-2 text-sm text-slate-600">
                       <div className="flex justify-between">
                         <span>2000만원 이상</span>
@@ -101,7 +102,7 @@ const Services: React.FC = () => {
 
                 <h3 className="text-2xl font-bold mb-2 text-slate-900 flex items-center gap-3">
                   <span className="text-sungshin-cyan/30 font-black text-3xl">02</span>
-                  물류 (Logistics)
+                  물류 지원
                 </h3>
 
                 <div className="h-px w-full bg-slate-100 my-6" />
@@ -122,7 +123,7 @@ const Services: React.FC = () => {
                 </ul>
 
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <p className="font-bold text-sungshin-cyan mb-3 text-sm uppercase tracking-wide">Key Features</p>
+                  <p className="font-bold text-sungshin-cyan mb-3 text-sm uppercase tracking-wide">핵심 강점</p>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                       <div className="bg-white p-3 rounded-lg text-center shadow-sm">
                         <span className="block font-bold text-slate-900 mb-1">주 6일</span>
@@ -156,7 +157,7 @@ const Services: React.FC = () => {
 
                 <h3 className="text-2xl font-bold mb-2 text-slate-900 flex items-center gap-3">
                   <span className="text-indigo-200 font-black text-3xl">03</span>
-                  전자상거래 (E-Commerce)
+                  전자상거래 지원
                 </h3>
 
                 <div className="h-px w-full bg-slate-100 my-6" />
@@ -177,7 +178,7 @@ const Services: React.FC = () => {
                 </ul>
 
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <p className="font-bold text-indigo-500 mb-3 text-sm uppercase tracking-wide">Delivery Time</p>
+                  <p className="font-bold text-indigo-500 mb-3 text-sm uppercase tracking-wide">평균 배송 기간</p>
                   <div className="flex justify-between items-center text-sm gap-2">
                      <div className="flex-1 text-center bg-white p-2 rounded border border-indigo-100">
                         <span className="block font-bold text-indigo-900">3-5일</span>
@@ -212,7 +213,7 @@ const Services: React.FC = () => {
 
                 <h3 className="text-2xl font-bold mb-2 text-slate-900 flex items-center gap-3">
                   <span className="text-slate-200 font-black text-3xl">04</span>
-                  3PL & 4PL
+                  3PL / 4PL 운영
                 </h3>
 
                 <div className="h-px w-full bg-slate-100 my-6" />
@@ -233,7 +234,7 @@ const Services: React.FC = () => {
                 </ul>
 
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                  <p className="font-bold text-slate-600 mb-3 text-sm uppercase tracking-wide">Custom Service</p>
+                  <p className="font-bold text-slate-600 mb-3 text-sm uppercase tracking-wide">맞춤 작업</p>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     난이도 높은 스티커 작업부터 재포장, 분리포장, 나눔포장까지 <strong className="text-slate-900">모든 임가공 작업</strong>이 가능합니다.
                   </p>

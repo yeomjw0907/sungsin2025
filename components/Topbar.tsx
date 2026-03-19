@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/', label: '구매대행' },
   { to: '/bank', label: '통장 개설' },
   { to: '/phone', label: '핸드폰 개설' },
+  { to: '/extras', label: '부가 기능' },
 ];
 
 const Topbar: React.FC = () => {
@@ -48,7 +49,7 @@ const Topbar: React.FC = () => {
               </Link>
             </div>
 
-            {/* Row 1 오른쪽: 성신 홈페이지 바로가기 */}
+            {/* Row 1 오른쪽: 성신 공식 홈페이지 */}
             <motion.a
               href="https://www.ck79.kr/"
               target="_blank"
@@ -57,8 +58,8 @@ const Topbar: React.FC = () => {
               className="flex items-center gap-2 text-sm md:text-base font-semibold hover:text-sungshin-cyan transition-colors shrink-0"
             >
               <ExternalLink className="w-4 h-4" />
-              <span className="hidden sm:inline">성신 홈페이지 바로가기</span>
-              <span className="sm:hidden">성신 홈페이지 바로가기</span>
+              <span className="hidden sm:inline">성신 공식 홈페이지</span>
+              <span className="sm:hidden">공식 홈페이지</span>
             </motion.a>
 
             {/* Row 1 가운데(Desktop): 네비 링크 */}
