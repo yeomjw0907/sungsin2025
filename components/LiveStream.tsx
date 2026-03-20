@@ -3,11 +3,13 @@ import Hls from 'hls.js';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Radio, Play, ExternalLink, AlertCircle, MessageCircle, Phone } from 'lucide-react';
 import { getSiteConfig } from '../lib/supabase';
+import { logSiteEvent } from '../lib/eventLogger';
+import { KAKAO_OPEN_CHAT_PURCHASE } from '../lib/kakaoLinks';
 
 const FALLBACK_URL_DEFAULT =
   'https://live.douyin.com/598222931159?enter_from_merge=link_share&enter_method=copy_link_share&action_type=click&from=web_code_link';
-const KAKAO_URL = 'https://pf.kakao.com/_xdxhxexj';
 const TEL_URL = 'tel:010-3213-1319';
+const KAKAO_URL = KAKAO_OPEN_CHAT_PURCHASE;
 const LIVE_HERO_VARIANT = (import.meta.env.VITE_LIVE_HERO_VARIANT as string | undefined) === 'B' ? 'B' : 'A';
 
 declare global {
@@ -137,6 +139,7 @@ const LiveStream: React.FC = () => {
           body: '실시간 성신 작업 현황을 확인해 보세요.',
         };
   const trackCtaClick = (label: string) => {
+    void logSiteEvent({ event_name: 'cta_click', event_label: label });
     if (window.gtag) {
       window.gtag('event', 'cta_click', {
         event_category: 'Consult',
@@ -145,6 +148,7 @@ const LiveStream: React.FC = () => {
     }
   };
   const trackExternalClick = (position: string) => {
+    void logSiteEvent({ event_name: 'live_external_click', event_label: position });
     if (window.gtag) {
       window.gtag('event', 'live_external_click', {
         position,
@@ -155,6 +159,7 @@ const LiveStream: React.FC = () => {
   useEffect(() => {
     if (hasTrackedHeroView.current) return;
     hasTrackedHeroView.current = true;
+    void logSiteEvent({ event_name: 'live_hero_view', event_label: `variant_${LIVE_HERO_VARIANT}` });
     if (window.gtag) {
       window.gtag('event', 'live_hero_view', {
         hero_variant: LIVE_HERO_VARIANT,

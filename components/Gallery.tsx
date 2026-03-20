@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 
 const images = [
   {
@@ -33,6 +34,31 @@ const images = [
 ];
 
 const Gallery: React.FC = () => {
+  const imageTypes = useMemo(() => images, []);
+  type Img = (typeof imageTypes)[number];
+  const [activeImage, setActiveImage] = useState<Img | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!activeImage) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveImage(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    // 모달 오픈 시 닫기 버튼 포커스
+    setTimeout(() => closeBtnRef.current?.focus(), 0);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [activeImage]);
+
   return (
     <section className="py-24 bg-slate-900 text-white overflow-hidden">
       <div className="container mx-auto px-6">
@@ -58,6 +84,13 @@ const Gallery: React.FC = () => {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               className={`relative group rounded-2xl overflow-hidden ${img.span} bg-slate-800`}
+              role="button"
+              tabIndex={0}
+              aria-label={`${img.title} 이미지 확대`}
+              onClick={() => setActiveImage(img)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setActiveImage(img);
+              }}
             >
               <img 
                 src={img.src} 
@@ -71,6 +104,47 @@ const Gallery: React.FC = () => {
             </motion.div>
           ))}
         </div>
+
+        {activeImage && (
+          <div
+            className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setActiveImage(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="relative w-full max-w-5xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                ref={closeBtnRef}
+                type="button"
+                onClick={() => setActiveImage(null)}
+                aria-label="닫기"
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <img
+                src={activeImage.src}
+                alt={activeImage.alt}
+                className="w-full max-h-[80vh] object-contain rounded-2xl"
+              />
+
+              {(activeImage.title || activeImage.desc) && (
+                <div className="mt-4 text-center">
+                  {activeImage.title && (
+                    <h4 className="text-xl font-bold text-white">{activeImage.title}</h4>
+                  )}
+                  {activeImage.desc && (
+                    <p className="text-sm text-slate-200 mt-1">{activeImage.desc}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

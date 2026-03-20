@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle, Phone } from 'lucide-react';
+import { logSiteEvent } from '../lib/eventLogger';
+import { KAKAO_CHANNEL_BANK_PHONE } from '../lib/kakaoLinks';
 
-const KAKAO_URL = 'https://pf.kakao.com/_xdxhxexj';
 const TEL_URL = 'tel:010-3213-1319';
+const KAKAO_URL = KAKAO_CHANNEL_BANK_PHONE;
 
 declare global {
   interface Window {
@@ -19,6 +21,7 @@ interface PageCTAProps {
 const PageCTA: React.FC<PageCTAProps> = ({ title, description }) => {
   const reduceMotion = useReducedMotion();
   const trackClick = (label: string) => {
+    void logSiteEvent({ event_name: 'cta_click', event_label: label });
     if (window.gtag) {
       window.gtag('event', 'cta_click', {
         event_category: 'Consult',

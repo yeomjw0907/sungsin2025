@@ -73,7 +73,7 @@ const PhonePage: React.FC = () => {
             className="mt-8 flex flex-col sm:flex-row gap-3 justify-center"
           >
             <a
-              href="https://pf.kakao.com/_xdxhxexj"
+              href="http://pf.kakao.com/_xfUgUn/chat"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-[#FEE500] text-gray-900 px-6 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all"

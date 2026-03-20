@@ -67,8 +67,8 @@ const Services: React.FC = () => {
                   <p className="font-bold text-sungshin-blue mb-3 text-sm uppercase tracking-wide">수수료 기준</p>
                   <div className="space-y-2 text-sm text-slate-600">
                       <div className="flex justify-between">
-                        <span>2000만원 이상</span>
-                        <span className="font-bold text-slate-900">1~2%</span>
+                        <span>2000만원 이상(개인 통관)</span>
+                        <span className="font-bold text-slate-900">10%</span>
                       </div>
                       <div className="flex justify-between">
                         <span>사업자통관</span>

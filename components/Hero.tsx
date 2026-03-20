@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calculator, AlertCircle, TrendingDown, MessageCircle, ExternalLink, Copy, Phone } from 'lucide-react';
+import { KAKAO_OPEN_CHAT_PURCHASE } from '../lib/kakaoLinks';
+import { logSiteEvent } from '../lib/eventLogger';
 
 // Google Analytics 타입 선언
 declare global {
@@ -176,6 +178,15 @@ const Hero: React.FC = () => {
   useEffect(() => {
     if (calculationResult && !hasTrackedCalculation.current) {
       hasTrackedCalculation.current = true;
+      void logSiteEvent({
+        event_name: 'calculator_completed',
+        event_label: `${mainCategory} - ${subCategory}`,
+        metadata: {
+          total_tax: Math.round(calculationResult.totalTax),
+          duty: Math.round(calculationResult.duty),
+          vat: Math.round(calculationResult.vat),
+        },
+      });
       
       // Google Analytics 이벤트 전송
       if (window.gtag) {
@@ -453,7 +464,7 @@ const Hero: React.FC = () => {
             <div className="flex flex-col gap-4 mb-4">
               {/* 카톡 문의 버튼 */}
               <motion.a
-                href="https://pf.kakao.com/_xdxhxexj"
+                href={KAKAO_OPEN_CHAT_PURCHASE}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}

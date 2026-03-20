@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { getSupabase } from '../lib/supabase';
@@ -16,6 +16,10 @@ const KakaoReviews: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [images, setImages] = useState<ReviewImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const reduceMotion = useReducedMotion();
+
+  const [activeReview, setActiveReview] = useState<ReviewImage | null>(null);
+  const [autoPaused, setAutoPaused] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,13 +71,72 @@ const KakaoReviews: React.FC = () => {
     };
   }, []);
 
+  const getStepPx = () => {
+    const el = scrollRef.current;
+    if (!el) return CARD_WIDTH + GAP;
+    const first = el.children.item(0) as HTMLElement | null;
+    const second = el.children.item(1) as HTMLElement | null;
+    if (!first || !second) return CARD_WIDTH + GAP;
+    const a = first.getBoundingClientRect();
+    const b = second.getBoundingClientRect();
+    const delta = b.left - a.left;
+    return Number.isFinite(delta) && delta > 0 ? delta : CARD_WIDTH + GAP;
+  };
+
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const step = CARD_WIDTH + GAP;
+    const step = getStepPx();
     scrollRef.current.scrollBy({
       left: direction === 'left' ? -step : step,
       behavior: 'smooth',
     });
+  };
+
+  useEffect(() => {
+    if (!activeReview) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveReview(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [activeReview]);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    if (loading) return;
+    if (!images.length) return;
+    if (autoPaused) return;
+    if (activeReview) return;
+
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const interval = window.setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const step = getStepPx();
+      const maxLeft = el.scrollWidth - el.clientWidth;
+      const epsilon = 2;
+
+      // 끝에 도달하면 1번(좌측)으로 되돌리기
+      if (el.scrollLeft >= maxLeft - epsilon) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: step, behavior: 'smooth' });
+      }
+    }, 3200);
+
+    return () => window.clearInterval(interval);
+  }, [loading, images.length, autoPaused, reduceMotion, activeReview]);
+
+  const handleOpenReview = (img: ReviewImage) => {
+    setActiveReview(img);
   };
 
   return (
@@ -135,6 +198,8 @@ const KakaoReviews: React.FC = () => {
             scrollBehavior: 'smooth',
             WebkitOverflowScrolling: 'touch',
           }}
+          onMouseEnter={() => setAutoPaused(true)}
+          onMouseLeave={() => setAutoPaused(false)}
         >
           {loading
             ? Array.from({ length: PLACEHOLDER_COUNT }).map((_, i) => (
@@ -161,6 +226,16 @@ const KakaoReviews: React.FC = () => {
                     transition={{ delay: index * 0.05 }}
                     className="flex-shrink-0 w-[260px] md:w-[280px] rounded-2xl overflow-hidden border border-slate-200 shadow-lg bg-slate-50 snap-start"
                     style={{ maxHeight: '420px' }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${index + 1}번째 후기 이미지 확대`}
+                    onClick={() => handleOpenReview(img)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleOpenReview(img);
+                      }
+                    }}
                   >
                     <img
                       src={img.src}
@@ -184,6 +259,37 @@ const KakaoReviews: React.FC = () => {
                   </motion.div>
                 ))}
         </div>
+
+        {activeReview && (
+          <div
+            className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
+            onClick={() => setActiveReview(null)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="relative w-full max-w-5xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label="닫기"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveReview(null);
+                }}
+                className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white"
+              >
+                닫기
+              </button>
+              <img
+                src={activeReview.src}
+                alt="후기 이미지 확대"
+                className="w-full max-h-[80vh] object-contain rounded-2xl bg-black"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

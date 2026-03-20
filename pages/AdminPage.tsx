@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Save, Radio, ExternalLink, Loader2 } from 'lucide-react';
+import { LogOut, Save, Radio, ExternalLink, Loader2, MousePointerClick, Activity, Users } from 'lucide-react';
 import { getSupabase } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
+import { ResponsiveContainer, CartesianGrid, XAxis, YAxis, Tooltip, Legend, LineChart, Line, BarChart, Bar } from 'recharts';
 
 const AdminPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [adminCheckLoading, setAdminCheckLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -21,8 +24,56 @@ const AdminPage: React.FC = () => {
   const [reviewImages, setReviewImages] = useState<Array<{ name: string; url: string }>>([]);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewMessage, setReviewMessage] = useState<string>('');
+  const [trafficLoading, setTrafficLoading] = useState(false);
+  const [trafficError, setTrafficError] = useState('');
+  const [trafficRangeDays, setTrafficRangeDays] = useState<7 | 14 | 30>(7);
+  const [trafficPageFilter, setTrafficPageFilter] = useState<'all' | '/' | '/bank' | '/phone' | '/extras'>('all');
+  const [trafficLabelFilter, setTrafficLabelFilter] = useState<string>('all');
+  const [trafficLabelOptions, setTrafficLabelOptions] = useState<string[]>([]);
+  const [trafficStats, setTrafficStats] = useState({
+    sessions: 0,
+    heroViews: 0,
+    ctaClicks: 0,
+    kakaoClicks: 0,
+    callClicks: 0,
+    externalClicks: 0,
+    ctaClicksToday: 0,
+    conversionRate: 0,
+  });
+  const [trafficTrend, setTrafficTrend] = useState<
+    Array<{
+      date: string;
+      heroViews: number;
+      ctaClicks: number;
+      kakaoClicks: number;
+      callClicks: number;
+      externalClicks: number;
+      conversionRate: number;
+    }>
+  >([]);
 
   const supabase = getSupabase();
+  const labelNameMap: Record<string, string> = {
+    'Live Hero Kakao': '라이브 첫 화면 - 카카오 상담 버튼',
+    'Live Hero Call': '라이브 첫 화면 - 전화 상담 버튼',
+    'Main CTA Kakao': '하단 CTA - 카카오 상담 버튼',
+    'Main CTA Call': '하단 CTA - 전화 상담 버튼',
+    'Page CTA Kakao': '서브페이지 CTA - 카카오 상담 버튼',
+    'Page CTA Call': '서브페이지 CTA - 전화 상담 버튼',
+    fallback_card: '라이브 영상 카드 클릭',
+    secondary_link: '외부 라이브 링크 클릭',
+    variant_A: '라이브 카피 A안 노출',
+    variant_B: '라이브 카피 B안 노출',
+  };
+  const toLabelDisplayName = (label: string): string => labelNameMap[label] ?? `기타 (${label})`;
+
+  type EventLogRow = {
+    event_name: string;
+    event_label: string | null;
+    page_path: string | null;
+    session_id: string | null;
+    created_at: string;
+  };
 
   useEffect(() => {
     if (!supabase) {
@@ -55,6 +106,42 @@ const AdminPage: React.FC = () => {
         setLiveM3u8Url(rowMap.live_m3u8_url ?? '');
         setLiveFallbackUrl(rowMap.live_fallback_url ?? '');
       });
+  }, [user, supabase]);
+
+  useEffect(() => {
+    if (!supabase) {
+      setAdminCheckLoading(false);
+      setIsAdmin(false);
+      return;
+    }
+    if (!user) {
+      setAdminCheckLoading(false);
+      setIsAdmin(false);
+      return;
+    }
+
+    let cancelled = false;
+    setAdminCheckLoading(true);
+    supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAdminCheckLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, supabase]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -124,11 +211,124 @@ const AdminPage: React.FC = () => {
     setReviewLoading(false);
   };
 
+  const refreshTrafficStats = async () => {
+    if (!supabase || !user) return;
+    setTrafficLoading(true);
+    setTrafficError('');
+
+    const rangeStart = new Date(Date.now() - trafficRangeDays * 24 * 60 * 60 * 1000).toISOString();
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+
+    const { data, error } = await supabase
+      .from('event_logs')
+      .select('event_name, event_label, page_path, session_id, created_at')
+      .gte('created_at', rangeStart)
+      .order('created_at', { ascending: false })
+      .limit(5000);
+
+    if (error) {
+      setTrafficError('트래픽 데이터를 불러오지 못했습니다.');
+      setTrafficLoading(false);
+      return;
+    }
+
+    const allRows = (data ?? []) as EventLogRow[];
+    const pageRows =
+      trafficPageFilter === 'all'
+        ? allRows
+        : allRows.filter((row) => {
+            const path = row.page_path || '';
+            if (trafficPageFilter === '/extras') return path.startsWith('/extras');
+            return path === trafficPageFilter;
+          });
+    const labelSet = new Set(
+      pageRows
+        .map((row) => (row.event_label || '').trim())
+        .filter((label) => label.length > 0)
+    );
+    const nextLabelOptions = Array.from(labelSet).sort((a, b) => a.localeCompare(b));
+    setTrafficLabelOptions(nextLabelOptions);
+    if (trafficLabelFilter !== 'all' && !labelSet.has(trafficLabelFilter)) {
+      setTrafficLabelFilter('all');
+    }
+    const rows =
+      trafficLabelFilter === 'all'
+        ? pageRows
+        : pageRows.filter((row) => (row.event_label || '') === trafficLabelFilter);
+    const sessionSet = new Set(
+      rows
+        .map((row) => row.session_id)
+        .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    );
+
+    const heroViews = rows.filter((row) => row.event_name === 'live_hero_view').length;
+    const ctaClicks = rows.filter((row) => row.event_name === 'cta_click').length;
+    const kakaoClicks = rows.filter(
+      (row) => row.event_name === 'cta_click' && (row.event_label ?? '').toLowerCase().includes('kakao')
+    ).length;
+    const callClicks = rows.filter(
+      (row) => row.event_name === 'cta_click' && (row.event_label ?? '').toLowerCase().includes('call')
+    ).length;
+    const externalClicks = rows.filter((row) => row.event_name === 'live_external_click').length;
+    const ctaClicksToday = rows.filter(
+      (row) => row.event_name === 'cta_click' && row.created_at >= startOfToday
+    ).length;
+    const conversionRate = heroViews > 0 ? Number(((ctaClicks / heroViews) * 100).toFixed(1)) : 0;
+
+    const buckets = new Map<
+      string,
+      { heroViews: number; ctaClicks: number; kakaoClicks: number; callClicks: number; externalClicks: number }
+    >();
+    for (let i = trafficRangeDays - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate()
+      ).padStart(2, '0')}`;
+      buckets.set(k, { heroViews: 0, ctaClicks: 0, kakaoClicks: 0, callClicks: 0, externalClicks: 0 });
+    }
+
+    rows.forEach((row) => {
+      const key = row.created_at.slice(0, 10);
+      const bucket = buckets.get(key);
+      if (!bucket) return;
+      if (row.event_name === 'live_hero_view') bucket.heroViews += 1;
+      if (row.event_name === 'cta_click') {
+        bucket.ctaClicks += 1;
+        const label = (row.event_label ?? '').toLowerCase();
+        if (label.includes('kakao')) bucket.kakaoClicks += 1;
+        if (label.includes('call')) bucket.callClicks += 1;
+      }
+      if (row.event_name === 'live_external_click') bucket.externalClicks += 1;
+    });
+
+    setTrafficTrend(
+      Array.from(buckets.entries()).map(([date, values]) => ({
+        date: date.slice(5),
+        conversionRate: values.heroViews > 0 ? Number(((values.ctaClicks / values.heroViews) * 100).toFixed(1)) : 0,
+        ...values,
+      }))
+    );
+
+    setTrafficStats({
+      sessions: sessionSet.size,
+      heroViews,
+      ctaClicks,
+      kakaoClicks,
+      callClicks,
+      externalClicks,
+      ctaClicksToday,
+      conversionRate,
+    });
+    setTrafficLoading(false);
+  };
+
   useEffect(() => {
     if (!user || !supabase) return;
     refreshReviewImages();
+    void refreshTrafficStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, supabase]);
+  }, [user, supabase, trafficRangeDays, trafficPageFilter, trafficLabelFilter]);
 
   const sanitizeBaseName = (name: string) => {
     // Windows/URL 안전 문자만 남기고 길이는 적당히 제한합니다.
@@ -193,7 +393,7 @@ const AdminPage: React.FC = () => {
     await refreshReviewImages();
   };
 
-  if (authLoading) {
+  if (authLoading || adminCheckLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-sungshin-cyan" />
@@ -278,6 +478,38 @@ const AdminPage: React.FC = () => {
     );
   }
 
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <h1 className="text-xl font-bold text-gray-900 mb-3">접근 권한이 없습니다</h1>
+          <p className="text-sm text-slate-600 mb-6">
+            현재 계정은 관리자 권한이 없어 관리 페이지에 접근할 수 없습니다.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-lg bg-sungshin-navy text-white font-semibold hover:bg-sungshin-navy/90"
+            >
+              로그아웃
+            </button>
+            <Link
+              to="/"
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50"
+            >
+              홈으로
+            </Link>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="bg-sungshin-navy text-white py-4 px-4">
@@ -303,7 +535,203 @@ const AdminPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto p-4 md:p-8 max-w-2xl">
+      <main className="container mx-auto p-4 md:p-8 max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 bg-white rounded-2xl shadow-xl p-6 md:p-8"
+        >
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <h2 className="text-xl font-bold text-gray-900">트래픽 요약</h2>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {[7, 14, 30].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setTrafficRangeDays(days as 7 | 14 | 30)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${
+                    trafficRangeDays === days
+                      ? 'bg-sungshin-cyan text-white border-sungshin-cyan'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  최근 {days}일
+                </button>
+              ))}
+              <select
+                value={trafficPageFilter}
+                onChange={(e) =>
+                  setTrafficPageFilter(e.target.value as 'all' | '/' | '/bank' | '/phone' | '/extras')
+                }
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700"
+              >
+                <option value="all">전체 페이지</option>
+                <option value="/">메인(/)</option>
+                <option value="/bank">통장(/bank)</option>
+                <option value="/phone">핸드폰(/phone)</option>
+                <option value="/extras">부가 기능(/extras)</option>
+              </select>
+              <select
+                value={trafficLabelFilter}
+                onChange={(e) => setTrafficLabelFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700"
+              >
+                <option value="all">전체 이벤트 라벨</option>
+                {trafficLabelOptions.map((label) => (
+                  <option key={label} value={label}>
+                    {toLabelDisplayName(label)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 mb-4">
+            * 이벤트 라벨 필터를 선택하면 특정 버튼/영역의 성과만 따로 확인할 수 있습니다.
+          </p>
+          {trafficError && (
+            <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg mb-4">{trafficError}</p>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                <Users className="w-4 h-4" />
+                방문 세션
+              </p>
+              <p className="text-2xl font-black text-slate-900">
+                {trafficLoading ? '-' : trafficStats.sessions}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                <Activity className="w-4 h-4" />
+                라이브 히어로 노출
+              </p>
+              <p className="text-2xl font-black text-slate-900">
+                {trafficLoading ? '-' : trafficStats.heroViews}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                <MousePointerClick className="w-4 h-4" />
+                상담 클릭
+              </p>
+              <p className="text-2xl font-black text-slate-900">
+                {trafficLoading ? '-' : trafficStats.ctaClicks}
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50">
+              <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
+                <ExternalLink className="w-4 h-4" />
+                외부 라이브 클릭
+              </p>
+              <p className="text-2xl font-black text-slate-900">
+                {trafficLoading ? '-' : trafficStats.externalClicks}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-600">
+                오늘 상담 클릭:
+                <span className="ml-2 font-bold text-slate-900">
+                  {trafficLoading ? '-' : trafficStats.ctaClicksToday}
+                </span>
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-600">
+                카카오/전화 클릭:
+                <span className="ml-2 font-bold text-slate-900">
+                  {trafficLoading ? '-' : `${trafficStats.kakaoClicks} / ${trafficStats.callClicks}`}
+                </span>
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 p-4">
+              <p className="text-sm text-slate-600">
+                상담 전환율:
+                <span className="ml-2 font-bold text-slate-900">
+                  {trafficLoading ? '-' : `${trafficStats.conversionRate}%`}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-base font-bold text-gray-900 mb-3">이벤트 추이 (최근 {trafficRangeDays}일)</h3>
+            <div className="h-72 rounded-xl border border-slate-200 p-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trafficTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="heroViews" name="히어로 노출" stroke="#0056b3" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="ctaClicks" name="상담 클릭" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="externalClicks" name="외부 클릭" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-base font-bold text-gray-900 mb-3">상담 채널 추이 (카카오/전화)</h3>
+            <div className="h-72 rounded-xl border border-slate-200 p-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trafficTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="kakaoClicks" name="카카오 클릭" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="callClicks" name="전화 클릭" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h3 className="text-base font-bold text-gray-900 mb-3">일자별 전환율 추이</h3>
+            <div className="h-64 rounded-xl border border-slate-200 p-3">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trafficTrend}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis tick={{ fill: '#64748b', fontSize: 12 }} allowDecimals={false} unit="%" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: '#fff',
+                    }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Legend />
+                  <Line type="monotone" dataKey="conversionRate" name="전환율(%)" stroke="#8b5cf6" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -1,8 +1,9 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle, Phone, Zap } from 'lucide-react';
+import { logSiteEvent } from '../lib/eventLogger';
+import { KAKAO_OPEN_CHAT_PURCHASE } from '../lib/kakaoLinks';
 
-const KAKAO_URL = 'https://pf.kakao.com/_xdxhxexj';
 const TEL_URL = 'tel:010-3213-1319';
 
 declare global {
@@ -14,6 +15,7 @@ declare global {
 const CTA: React.FC = () => {
   const reduceMotion = useReducedMotion();
   const trackClick = (label: string) => {
+    void logSiteEvent({ event_name: 'cta_click', event_label: label });
     if (window.gtag) {
       window.gtag('event', 'cta_click', {
         event_category: 'Consult',
@@ -65,7 +67,7 @@ const CTA: React.FC = () => {
             
             <div className="w-full max-w-xl flex flex-col sm:flex-row gap-3">
               <motion.a
-                href={KAKAO_URL}
+                href={KAKAO_OPEN_CHAT_PURCHASE}
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={reduceMotion ? undefined : { scale: 1.03 }}
