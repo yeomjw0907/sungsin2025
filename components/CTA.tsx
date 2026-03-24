@@ -61,6 +61,7 @@ const CTA: React.FC = () => {
             
             <p className="text-base md:text-2xl text-slate-300 mb-10 md:mb-12 leading-relaxed break-keep font-light max-w-2xl">
               사업 규모와 품목에 맞는 무역·물류 실행안을
+              <span className="md:hidden"> </span>
               <br className="hidden md:block" />
               <span className="text-white font-semibold">전담 매니저가 직접 안내합니다.</span>
             </p>

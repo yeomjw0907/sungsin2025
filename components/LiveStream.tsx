@@ -176,6 +176,7 @@ const LiveStream: React.FC = () => {
             <p className="text-sm font-semibold text-sungshin-cyan mb-2">실시간 운영 현황</p>
             <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-3 break-keep">
               {heroCopy.titleTop}
+              <span className="md:hidden"> </span>
               <br className="hidden md:block" />
               {heroCopy.titleBottom}
             </h1>
@@ -203,6 +204,7 @@ const LiveStream: React.FC = () => {
           </div>
           <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight mb-3 break-keep">
             {heroCopy.titleTop}
+            <span className="md:hidden"> </span>
             <br className="hidden md:block" />
             {heroCopy.titleBottom}
           </h1>
