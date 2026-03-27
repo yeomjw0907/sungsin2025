@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.site_config (
 
 -- 초기 데이터 (라이브 URL)
 INSERT INTO public.site_config (key, value) VALUES
+  ('live_youtube_url', ''),
   ('live_m3u8_url', ''),
   ('live_fallback_url', 'https://live.douyin.com/598222931159?enter_from_merge=link_share&enter_method=copy_link_share&action_type=click&from=web_code_link')
 ON CONFLICT (key) DO NOTHING;

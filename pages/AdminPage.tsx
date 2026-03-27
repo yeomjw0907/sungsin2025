@@ -14,6 +14,7 @@ const AdminPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [liveYoutubeUrl, setLiveYoutubeUrl] = useState('');
   const [liveM3u8Url, setLiveM3u8Url] = useState('');
   const [liveFallbackUrl, setLiveFallbackUrl] = useState('');
   const [saveLoading, setSaveLoading] = useState(false);
@@ -97,12 +98,13 @@ const AdminPage: React.FC = () => {
     supabase
       .from('site_config')
       .select('key, value')
-      .in('key', ['live_m3u8_url', 'live_fallback_url'])
+      .in('key', ['live_youtube_url', 'live_m3u8_url', 'live_fallback_url'])
       .then(({ data }) => {
         const rowMap: Record<string, string> = {};
         (data || []).forEach((row: { key: string; value: string }) => {
           rowMap[row.key] = row.value ?? '';
         });
+        setLiveYoutubeUrl(rowMap.live_youtube_url ?? '');
         setLiveM3u8Url(rowMap.live_m3u8_url ?? '');
         setLiveFallbackUrl(rowMap.live_fallback_url ?? '');
       });
@@ -169,6 +171,7 @@ const AdminPage: React.FC = () => {
     setSaveLoading(true);
     const { error } = await supabase.from('site_config').upsert(
       [
+        { key: 'live_youtube_url', value: liveYoutubeUrl.trim() },
         { key: 'live_m3u8_url', value: liveM3u8Url.trim() },
         { key: 'live_fallback_url', value: liveFallbackUrl.trim() },
       ],
@@ -747,6 +750,22 @@ const AdminPage: React.FC = () => {
 
           <form onSubmit={handleSave} className="space-y-6">
             <div>
+              <label htmlFor="live_youtube" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                YouTube 라이브 URL (권장)
+              </label>
+              <input
+                id="live_youtube"
+                type="url"
+                value={liveYoutubeUrl}
+                onChange={(e) => setLiveYoutubeUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                입력하면 유튜브 라이브가 최우선으로 노출됩니다.
+              </p>
+            </div>
+            <div>
               <label htmlFor="live_m3u8" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                 M3U8 스트림 URL (선택)
               </label>
@@ -759,7 +778,7 @@ const AdminPage: React.FC = () => {
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
               />
               <p className="mt-1 text-xs text-slate-500">
-                비우면 폴백 링크(티크톡 라이브 페이지)만 표시됩니다.
+                YouTube 라이브 URL이 비어 있을 때만 사용됩니다.
               </p>
             </div>
             <div>

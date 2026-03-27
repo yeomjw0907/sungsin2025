@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Hls from 'hls.js';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Radio, Play, ExternalLink, AlertCircle, MessageCircle, Phone } from 'lucide-react';
+import { Radio, ExternalLink, AlertCircle, MessageCircle, Phone, RefreshCw } from 'lucide-react';
 import { getSiteConfig } from '../lib/supabase';
 import { logSiteEvent } from '../lib/eventLogger';
 import { KAKAO_OPEN_CHAT_PURCHASE } from '../lib/kakaoLinks';
@@ -11,6 +11,67 @@ const FALLBACK_URL_DEFAULT =
 const TEL_URL = 'tel:010-3213-1319';
 const KAKAO_URL = KAKAO_OPEN_CHAT_PURCHASE;
 const LIVE_HERO_VARIANT = (import.meta.env.VITE_LIVE_HERO_VARIANT as string | undefined) === 'B' ? 'B' : 'A';
+
+const M3U8_VARIANTS = ['', '_hd5', '_zsd5', '_ld5'];
+
+function parseYouTubeLiveEmbedUrl(rawValue: string): string | null {
+  const source = (rawValue || '').trim();
+  if (!source) return null;
+  try {
+    const url = new URL(source);
+    let videoId = '';
+    if (url.hostname.includes('youtu.be')) {
+      videoId = url.pathname.replace('/', '').trim();
+    } else if (url.hostname.includes('youtube.com')) {
+      if (url.pathname.startsWith('/watch')) {
+        videoId = url.searchParams.get('v')?.trim() || '';
+      } else if (url.pathname.startsWith('/live/')) {
+        videoId = url.pathname.split('/').filter(Boolean)[1] || '';
+      } else if (url.pathname.startsWith('/embed/')) {
+        videoId = url.pathname.split('/').filter(Boolean)[1] || '';
+      }
+    }
+    if (!videoId) return null;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0`;
+  } catch {
+    return null;
+  }
+}
+
+function buildM3u8Candidates(rawValue: string): string[] {
+  const source = (rawValue || '').trim();
+  if (!source) return [];
+
+  const candidates: string[] = [];
+  const pushUnique = (value: string) => {
+    const normalized = value.replace(/\\\//g, '/').trim();
+    if (!normalized || candidates.includes(normalized)) return;
+    candidates.push(normalized);
+  };
+
+  // 1) URL 하나만 넣은 일반 케이스
+  if (source.startsWith('http')) {
+    pushUnique(source);
+  }
+
+  // 2) stream_data 텍스트 전체를 붙여 넣은 케이스도 자동 파싱
+  const matchedUrls = source.match(/https:\/\/pull-hls-[^"\\\s]+\.m3u8\?[^"\\\s]+/g) || [];
+  matchedUrls.forEach(pushUnique);
+
+  // 3) stream-<id> 기반 변형 URL 후보 자동 생성
+  const expanded: string[] = [];
+  for (const url of candidates) {
+    expanded.push(url);
+    const baseMatch = url.match(/^(https:\/\/pull-hls-[^/]+\/stage\/stream-\d+)(?:_(?:hd5|zsd5|ld5))?\/index\.m3u8(\?.*)$/);
+    if (!baseMatch) continue;
+    const [, base, query] = baseMatch;
+    for (const variant of M3U8_VARIANTS) {
+      expanded.push(`${base}${variant}/index.m3u8${query}`);
+    }
+  }
+
+  return Array.from(new Set(expanded));
+}
 
 declare global {
   interface Window {
@@ -22,10 +83,16 @@ const LiveStream: React.FC = () => {
   const reduceMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
+  const hlsNetworkRetryRef = useRef(0);
+  const hlsMediaRecoverRef = useRef(0);
   const hasTrackedHeroView = useRef(false);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [fallbackReason, setFallbackReason] = useState<string | null>(null);
   const [useFallback, setUseFallback] = useState(true);
+  const [activeCandidateIndex, setActiveCandidateIndex] = useState(0);
+  const [activeCandidateTotal, setActiveCandidateTotal] = useState(0);
   const [configLoading, setConfigLoading] = useState(true);
+  const [liveYoutubeUrl, setLiveYoutubeUrl] = useState<string | null>(null);
   const [liveM3u8Url, setLiveM3u8Url] = useState<string | null>(null);
   const [liveFallbackUrl, setLiveFallbackUrl] = useState<string | null>(null);
 
@@ -38,18 +105,21 @@ const LiveStream: React.FC = () => {
     liveFallbackUrl !== null && liveFallbackUrl !== undefined && liveFallbackUrl !== ''
       ? liveFallbackUrl
       : FALLBACK_URL_DEFAULT;
+  const youtubeEmbedUrl = parseYouTubeLiveEmbedUrl(liveYoutubeUrl ?? '');
 
   useEffect(() => {
     let cancelled = false;
     setConfigLoading(true);
-    getSiteConfig(['live_m3u8_url', 'live_fallback_url'])
+    getSiteConfig(['live_youtube_url', 'live_m3u8_url', 'live_fallback_url'])
       .then((config) => {
         if (cancelled) return;
+        setLiveYoutubeUrl(config.live_youtube_url ?? null);
         setLiveM3u8Url(config.live_m3u8_url ?? null);
         setLiveFallbackUrl(config.live_fallback_url ?? null);
       })
       .catch(() => {
         if (!cancelled) {
+          setLiveYoutubeUrl(null);
           setLiveM3u8Url(null);
           setLiveFallbackUrl(null);
         }
@@ -63,67 +133,134 @@ const LiveStream: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const effectiveM3u8 = m3u8Url?.trim() || '';
-    if (!effectiveM3u8) {
+    if (youtubeEmbedUrl) {
+      setStreamError(null);
+      setFallbackReason(null);
       setUseFallback(true);
+      setActiveCandidateIndex(0);
+      setActiveCandidateTotal(0);
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+      return;
+    }
+
+    const candidates = buildM3u8Candidates(m3u8Url || '');
+    if (!candidates.length) {
+      setFallbackReason('M3U8 값이 비어있거나 불러오지 못해 외부 라이브로 전환되었습니다.');
+      setUseFallback(true);
+      setActiveCandidateIndex(0);
+      setActiveCandidateTotal(0);
+      return;
+    }
+
+    // 1차 렌더에서 video가 없을 수 있으므로 먼저 폴백을 해제해 video를 렌더링
+    if (useFallback) {
+      setUseFallback(false);
       return;
     }
     if (!videoRef.current) return;
 
     setStreamError(null);
+    setFallbackReason(null);
     setUseFallback(false);
+    setActiveCandidateTotal(candidates.length);
+    setActiveCandidateIndex(1);
 
     const video = videoRef.current;
-
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-      });
-      hlsRef.current = hls;
-
-      hls.loadSource(effectiveM3u8);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setStreamError(null);
-      });
-
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (data.fatal) {
-          setStreamError(
-            data.type === Hls.ErrorTypes.NETWORK_ERROR
-              ? '스트림 연결 실패 (URL 만료 또는 차단)'
-              : '재생 오류'
-          );
-          setUseFallback(true);
-          hls.destroy();
-          hlsRef.current = null;
-        }
-      });
-      return () => {
-        hls.destroy();
+    let cancelled = false;
+    const destroyHls = () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
         hlsRef.current = null;
-      };
-    }
-
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = effectiveM3u8;
-      const onError = () => {
-        setStreamError('스트림 연결 실패 (URL 만료 또는 차단)');
+      }
+    };
+    const tryNextCandidate = (currentIndex: number, reason: string) => {
+      const nextIndex = currentIndex + 1;
+      if (nextIndex >= candidates.length) {
+        setStreamError(reason);
+        setFallbackReason(reason);
         setUseFallback(true);
-      };
-      video.addEventListener('error', onError);
-      return () => {
-        video.removeEventListener('error', onError);
-        video.src = '';
-      };
-    }
+        destroyHls();
+        return;
+      }
+      setActiveCandidateIndex(nextIndex + 1);
+      setStreamError(`스트림 ${nextIndex + 1}/${candidates.length} 자동 시도 중...`);
+      attachCandidate(nextIndex);
+    };
+    const attachCandidate = (candidateIndex: number) => {
+      if (cancelled) return;
+      const effectiveM3u8 = candidates[candidateIndex];
+      hlsNetworkRetryRef.current = 0;
+      hlsMediaRecoverRef.current = 0;
 
-    setUseFallback(true);
-  }, [m3u8Url]);
+      if (Hls.isSupported()) {
+        destroyHls();
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+        });
+        hlsRef.current = hls;
+        hls.loadSource(effectiveM3u8);
+        hls.attachMedia(video);
 
-  const showFallbackCard = useFallback || streamError;
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setStreamError(null);
+          setUseFallback(false);
+        });
+
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (!data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            if (hlsNetworkRetryRef.current < 2) {
+              hlsNetworkRetryRef.current += 1;
+              setStreamError(`연결 재시도 중 (${hlsNetworkRetryRef.current}/2)`);
+              hls.startLoad();
+              return;
+            }
+            tryNextCandidate(candidateIndex, '스트림 연결 실패 (URL 만료 또는 차단)');
+            return;
+          }
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            if (hlsMediaRecoverRef.current < 1) {
+              hlsMediaRecoverRef.current += 1;
+              setStreamError('재생 복구 시도 중...');
+              hls.recoverMediaError();
+              return;
+            }
+            tryNextCandidate(candidateIndex, '재생 실패 (코덱 미지원 가능)');
+            return;
+          }
+          tryNextCandidate(candidateIndex, '재생 실패 (브라우저 환경 제한)');
+        });
+        return;
+      }
+
+      // Safari 등 네이티브 HLS 지원 브라우저
+      if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = effectiveM3u8;
+        const onError = () => {
+          video.removeEventListener('error', onError);
+          tryNextCandidate(candidateIndex, '스트림 연결 실패 (URL 만료 또는 차단)');
+        };
+        video.addEventListener('error', onError);
+        setUseFallback(false);
+        return;
+      }
+
+      tryNextCandidate(candidateIndex, '현재 브라우저는 HLS 재생을 지원하지 않습니다');
+    };
+
+    attachCandidate(0);
+    return () => {
+      cancelled = true;
+      destroyHls();
+      video.src = '';
+    };
+  }, [m3u8Url, useFallback, youtubeEmbedUrl]);
+
+  const showFallbackCard = !youtubeEmbedUrl && (useFallback || streamError);
   const heroCopy =
     LIVE_HERO_VARIANT === 'B'
       ? {
@@ -218,7 +355,24 @@ const LiveStream: React.FC = () => {
           </div>
         </div>
 
-        {m3u8Url && !showFallbackCard && (
+        {youtubeEmbedUrl && (
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+            className="relative w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-200 bg-black"
+            style={{ paddingBottom: '56.25%' }}
+          >
+            <iframe
+              src={youtubeEmbedUrl}
+              title="YouTube Live"
+              className="absolute inset-0 w-full h-full"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              referrerPolicy="strict-origin-when-cross-origin"
+            />
+          </motion.div>
+        )}
+
+        {!youtubeEmbedUrl && m3u8Url && !showFallbackCard && (
           <motion.div
             initial={reduceMotion ? false : { opacity: 0, y: 10 }}
             animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
@@ -236,14 +390,20 @@ const LiveStream: React.FC = () => {
             <p className="absolute bottom-2 left-2 right-2 text-center text-xs text-white/70 bg-black/40 py-1 rounded">
               M3U8 스트림 · URL 만료 시 재생이 끊길 수 있습니다
             </p>
+            {activeCandidateTotal > 1 && (
+              <p className="absolute top-2 left-2 text-xs text-white/90 bg-black/50 px-2 py-1 rounded inline-flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" />
+                자동 시도 {activeCandidateIndex}/{activeCandidateTotal}
+              </p>
+            )}
           </motion.div>
         )}
 
-        {streamError && (
+        {(streamError || (showFallbackCard && fallbackReason)) && (
           <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-amber-800">
             <AlertCircle className="w-5 h-5 shrink-0" />
             <span className="text-sm font-medium">
-              {streamError}. 아래 버튼으로 틱톡에서 시청하세요.
+              {streamError || fallbackReason}. 아래 버튼으로 틱톡에서 시청하세요.
             </span>
           </div>
         )}
@@ -261,12 +421,11 @@ const LiveStream: React.FC = () => {
           >
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white p-6">
               <div className="p-5 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/30">
-                <Play className="w-12 h-12 md:w-16 md:h-16 fill-white" />
+                <ExternalLink className="w-12 h-12 md:w-16 md:h-16" />
               </div>
-              <span className="text-lg md:text-xl font-bold">지금 라이브 보기</span>
-              <span className="text-sm text-white/80 flex items-center gap-1">
-                <ExternalLink className="w-4 h-4" />
-                클릭하면 외부 라이브 페이지로 이동합니다
+              <span className="text-lg md:text-xl font-bold">라이브를 외부 페이지에서 여세요</span>
+              <span className="text-sm text-white/80 text-center">
+                틱톡/도우인 정책상 사이트 내부 재생이 차단될 수 있습니다.
               </span>
             </div>
           </motion.a>
