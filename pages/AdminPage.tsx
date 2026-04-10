@@ -542,7 +542,90 @@ const AdminPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8 bg-white rounded-2xl shadow-xl p-6 md:p-8"
+          className="bg-white rounded-2xl shadow-xl p-6 md:p-8"
+        >
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Radio className="w-5 h-5 text-sungshin-cyan" />
+            라이브 링크 설정
+          </h2>
+          <p className="text-slate-600 text-sm mb-6">
+            메인 페이지 라이브 섹션에 사용되는 URL입니다. 저장 후 메인 페이지에서 확인하세요.
+          </p>
+
+          <form onSubmit={handleSave} className="space-y-6">
+            <div>
+              <label htmlFor="live_youtube" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                YouTube 라이브 URL (권장)
+              </label>
+              <input
+                id="live_youtube"
+                type="url"
+                value={liveYoutubeUrl}
+                onChange={(e) => setLiveYoutubeUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                입력하면 유튜브 라이브가 최우선으로 노출됩니다.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="live_m3u8" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                M3U8 스트림 URL (선택)
+              </label>
+              <input
+                id="live_m3u8"
+                type="url"
+                value={liveM3u8Url}
+                onChange={(e) => setLiveM3u8Url(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
+              />
+              <p className="mt-1 text-xs text-slate-500">
+                YouTube 라이브 URL이 비어 있을 때만 사용됩니다.
+              </p>
+            </div>
+            <div>
+              <label htmlFor="live_fallback" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                폴백 URL (라이브 보기 버튼 링크)
+              </label>
+              <input
+                id="live_fallback"
+                type="url"
+                value={liveFallbackUrl}
+                onChange={(e) => setLiveFallbackUrl(e.target.value)}
+                placeholder="https://live.douyin.com/..."
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
+              />
+            </div>
+
+            {saveMessage === 'success' && (
+              <p className="text-sm text-green-600 bg-green-50 px-4 py-2 rounded-lg">저장되었습니다.</p>
+            )}
+            {saveMessage === 'error' && (
+              <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">저장에 실패했습니다.</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={saveLoading}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-sungshin-cyan text-white font-semibold hover:bg-sungshin-cyan/90 transition-colors disabled:opacity-60"
+            >
+              {saveLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              저장
+            </button>
+          </form>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 bg-white rounded-2xl shadow-xl p-6 md:p-8"
         >
           <div className="flex items-center justify-between gap-3 mb-5">
             <h2 className="text-xl font-bold text-gray-900">트래픽 요약</h2>
@@ -733,89 +816,6 @@ const AdminPage: React.FC = () => {
               </ResponsiveContainer>
             </div>
           </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-xl p-6 md:p-8"
-        >
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Radio className="w-5 h-5 text-sungshin-cyan" />
-            라이브 링크 설정
-          </h2>
-          <p className="text-slate-600 text-sm mb-6">
-            메인 페이지 라이브 섹션에 사용되는 URL입니다. 저장 후 메인 페이지에서 확인하세요.
-          </p>
-
-          <form onSubmit={handleSave} className="space-y-6">
-            <div>
-              <label htmlFor="live_youtube" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                YouTube 라이브 URL (권장)
-              </label>
-              <input
-                id="live_youtube"
-                type="url"
-                value={liveYoutubeUrl}
-                onChange={(e) => setLiveYoutubeUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=..."
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                입력하면 유튜브 라이브가 최우선으로 노출됩니다.
-              </p>
-            </div>
-            <div>
-              <label htmlFor="live_m3u8" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                M3U8 스트림 URL (선택)
-              </label>
-              <input
-                id="live_m3u8"
-                type="url"
-                value={liveM3u8Url}
-                onChange={(e) => setLiveM3u8Url(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                YouTube 라이브 URL이 비어 있을 때만 사용됩니다.
-              </p>
-            </div>
-            <div>
-              <label htmlFor="live_fallback" className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <ExternalLink className="w-4 h-4" />
-                폴백 URL (라이브 보기 버튼 링크)
-              </label>
-              <input
-                id="live_fallback"
-                type="url"
-                value={liveFallbackUrl}
-                onChange={(e) => setLiveFallbackUrl(e.target.value)}
-                placeholder="https://live.douyin.com/..."
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sungshin-cyan focus:border-transparent text-sm"
-              />
-            </div>
-
-            {saveMessage === 'success' && (
-              <p className="text-sm text-green-600 bg-green-50 px-4 py-2 rounded-lg">저장되었습니다.</p>
-            )}
-            {saveMessage === 'error' && (
-              <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg">저장에 실패했습니다.</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={saveLoading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-sungshin-cyan text-white font-semibold hover:bg-sungshin-cyan/90 transition-colors disabled:opacity-60"
-            >
-              {saveLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Save className="w-5 h-5" />
-              )}
-              저장
-            </button>
-          </form>
         </motion.div>
 
         <motion.div
